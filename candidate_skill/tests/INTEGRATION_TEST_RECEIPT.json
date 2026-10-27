@@ -1,8 +1,8 @@
 {
-  "executed_at": "2026-10-27T22:59:19.211Z",
+  "executed_at": "2026-10-27T23:08:43.905Z",
   "suite": "skill_integration",
-  "total": 71,
-  "passed": 71,
+  "total": 80,
+  "passed": 80,
   "failed": 0,
   "results": [
     {
@@ -358,6 +358,51 @@
     {
       "id": "INT-071",
       "description": "N01 expired forecast detected via reference_time, not system clock",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-072",
+      "description": "German script without injected upgrades passes epistemic_integrity",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-073",
+      "description": "German script with injected certainty upgrade triggers HOLD_NEEDS_RECHECK",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-074",
+      "description": "German 'steht zweifelsfrei fest' detected as unsupported upgrade",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-075",
+      "description": "German 'wurde endgültig bewiesen' detected as unsupported upgrade",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-076",
+      "description": "English 'proves that' still detected in English scripts",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-077",
+      "description": "German uncertainty marker 'wird angenommen' does NOT trigger upgrade",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-078",
+      "description": "Spoken narration words counted separately from total script words",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-079",
+      "description": "Scene directions excluded from spoken narration count",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-080",
+      "description": "Script with confirmed uncertainty allows strong claims",
       "result": "PASS"
     }
   ],

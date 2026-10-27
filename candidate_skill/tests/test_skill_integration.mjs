@@ -36,6 +36,8 @@ function test(id, description, fn) {
 // Load demo fixtures
 const demoInput = JSON.parse(readFileSync(new URL("../examples/demo_input.json", import.meta.url), "utf-8"));
 const demoScript = readFileSync(new URL("../examples/demo_script.md", import.meta.url), "utf-8");
+const germanInput = JSON.parse(readFileSync(new URL("../examples/german_trial_input.json", import.meta.url), "utf-8"));
+const germanScript = readFileSync(new URL("../examples/german_trial_script.md", import.meta.url), "utf-8");
 
 // === INPUT VALIDATION TESTS ===
 
@@ -682,6 +684,80 @@ test("INT-071", "N01 expired forecast detected via reference_time, not system cl
   };
   const r = validateInput(input);
   return r.holds.some(h => h.type === "HOLD_STALE_FORECAST" && h.detail.includes("expired"));
+});
+
+// === MULTILINGUAL EPISTEMIC QA TESTS ===
+
+test("INT-072", "German script without injected upgrades passes epistemic_integrity", () => {
+  const r = analyzeScript(germanScript, germanInput);
+  return r.epistemic_integrity === "PASS" && r.epistemic_upgrades.length === 0;
+});
+
+test("INT-073", "German script with injected certainty upgrade triggers HOLD_NEEDS_RECHECK", () => {
+  const injected = germanScript.replace(
+    "Der Positionswechsel beseitigte diesen Vorteil.",
+    "Der Positionswechsel beseitigte diesen Vorteil. Diese Untersuchung beweist eindeutig, dass die Methode immer funktioniert."
+  );
+  const r = analyzeScript(injected, germanInput);
+  return r.epistemic_integrity === "HOLD_NEEDS_RECHECK" &&
+         r.epistemic_upgrades.some(u => u.includes("beweist eindeutig"));
+});
+
+test("INT-074", "German 'steht zweifelsfrei fest' detected as unsupported upgrade", () => {
+  const injected = germanScript.replace(
+    "Es wird angenommen, dass der Positionswechsel",
+    "Es steht zweifelsfrei fest, dass der Positionswechsel"
+  );
+  const r = analyzeScript(injected, germanInput);
+  return r.epistemic_integrity === "HOLD_NEEDS_RECHECK" &&
+         r.epistemic_upgrades.some(u => u.includes("steht zweifelsfrei fest"));
+});
+
+test("INT-075", "German 'wurde endgültig bewiesen' detected as unsupported upgrade", () => {
+  const injected = germanScript.replace(
+    "Er war nicht der einzige Faktor",
+    "Es wurde endgültig bewiesen, dass er der entscheidende Faktor war, und er war nicht der einzige Faktor"
+  );
+  const r = analyzeScript(injected, germanInput);
+  return r.epistemic_integrity === "HOLD_NEEDS_RECHECK" &&
+         r.epistemic_upgrades.some(u => u.includes("wurde endgültig bewiesen"));
+});
+
+test("INT-076", "English 'proves that' still detected in English scripts", () => {
+  const injected = demoScript.replace(
+    "noticed something in the static.",
+    "noticed something in the static. This research proves that the method always works."
+  );
+  const r = analyzeScript(injected, demoInput);
+  return r.epistemic_integrity === "HOLD_NEEDS_RECHECK" &&
+         r.epistemic_upgrades.some(u => u.includes("proves that"));
+});
+
+test("INT-077", "German uncertainty marker 'wird angenommen' does NOT trigger upgrade", () => {
+  const r = analyzeScript(germanScript, germanInput);
+  return r.epistemic_integrity === "PASS";
+});
+
+test("INT-078", "Spoken narration words counted separately from total script words", () => {
+  const r = analyzeScript(germanScript, germanInput);
+  return typeof r.spoken_narration_words === "number" &&
+         r.spoken_narration_words > 0 &&
+         r.spoken_narration_words < r.total_words;
+});
+
+test("INT-079", "Scene directions excluded from spoken narration count", () => {
+  const r = analyzeScript(germanScript, germanInput);
+  return r.spoken_narration_words < r.total_words;
+});
+
+test("INT-080", "Script with confirmed uncertainty allows strong claims", () => {
+  const confirmedInput = { ...germanInput, uncertainty: "confirmed" };
+  const injected = germanScript.replace(
+    "Der Positionswechsel beseitigte diesen Vorteil.",
+    "Der Positionswechsel beseitigte diesen Vorteil. Diese Untersuchung beweist eindeutig, dass die Methode immer funktioniert."
+  );
+  const r = analyzeScript(injected, confirmedInput);
+  return r.epistemic_integrity === "PASS";
 });
 
 // === Print results ===

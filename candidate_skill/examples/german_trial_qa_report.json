@@ -34,6 +34,7 @@
     }
   ],
   "total_words": 2524,
+  "spoken_narration_words": 2333,
   "target_words": 2800,
   "word_budget_status": "PASS",
   "evidence_referenced": [

@@ -272,13 +272,47 @@ export function analyzeScript(scriptText, input) {
   const subjectPresent = subjectWords.length === 0 || subjectHits >= Math.min(2, subjectWords.length);
   const objectPresent = objectWords.length === 0 || objectHits >= Math.min(2, objectWords.length);
 
-  // Epistemic qualifier check
+  // Spoken narration word count — exclude scene directions, headings,
+  // interview metadata, and evidence/QA tables
+  const narrationLines = [];
+  for (const sec of scriptSections) {
+    for (const line of sec.content.split("\n")) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      if (/^\[.*\]$/.test(trimmed)) continue;
+      if (/^\[SZENE:/i.test(trimmed) || /^\[SCENE:/i.test(trimmed)) continue;
+      if (/^\[INTERVIEW:/i.test(trimmed)) continue;
+      if (/^\[ABBLENDE\]$/i.test(trimmed) || /^\[FADE/i.test(trimmed)) continue;
+      if (/^#+\s/.test(trimmed)) continue;
+      if (/^>/.test(trimmed)) continue;
+      if (/^\|/.test(trimmed)) continue;
+      if (/^---+$/.test(trimmed)) continue;
+      if (/^\*\*[A-Z_]+\*\*/.test(trimmed)) continue;
+      narrationLines.push(trimmed);
+    }
+  }
+  const spokenNarrationWords = countWords(narrationLines.join(" "));
+
+  // Epistemic qualifier check — multilingual
   const uncertainty = input.uncertainty || "";
   const upgrades = [];
   if (uncertainty !== "confirmed" && uncertainty !== "certain") {
-    const strongClaims = ["proves that", "confirms that", "has been proven", "it is certain"];
-    for (const phrase of strongClaims) {
-      if (scriptBody.toLowerCase().includes(phrase)) {
+    const strongClaimsEN = [
+      "proves that", "confirms that", "has been proven", "it is certain",
+      "undeniably", "without doubt", "definitively proven"
+    ];
+    const strongClaimsDE = [
+      "beweist eindeutig", "beweist zweifelsfrei", "beweist definitiv",
+      "bestätigt endgültig", "steht zweifelsfrei fest", "ist eindeutig bewiesen",
+      "ist definitiv bewiesen", "wurde endgültig bewiesen", "wurde eindeutig bewiesen",
+      "ist zweifellos", "steht endgültig fest", "wurde definitiv bestätigt",
+      "immer funktioniert", "garantiert dass", "hat bewiesen dass",
+      "dass die methode immer", "ist unbestreitbar"
+    ];
+    const allStrong = [...strongClaimsEN, ...strongClaimsDE];
+    const bodyLowerForEpistemic = scriptBody.toLowerCase();
+    for (const phrase of allStrong) {
+      if (bodyLowerForEpistemic.includes(phrase)) {
         upgrades.push(phrase);
       }
     }
@@ -287,6 +321,7 @@ export function analyzeScript(scriptText, input) {
   return {
     sections: wordCounts,
     total_words: totalWords,
+    spoken_narration_words: spokenNarrationWords,
     target_words: input.target_words || 3000,
     word_budget_status: totalWords >= 2500 && totalWords <= (input.target_words || 3000) * 1.1 ? "PASS" : "REVIEW",
     evidence_referenced: referencedIds,

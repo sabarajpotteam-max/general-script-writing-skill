@@ -1,0 +1,27 @@
+{
+  "executed_at": "2026-10-27T23:10:00Z",
+  "test": "genuine_claude_code_skill_invocation",
+  "skill_name": "universal-scriptwriting",
+  "deployed_to": ".claude/skills/universal-scriptwriting/SKILL.md",
+  "files_deployed": [
+    "SKILL.md",
+    "validate.mjs",
+    "word_count.mjs",
+    "references/evidence_standards.md",
+    "references/niche_adapters.md",
+    "references/writing_rules.md"
+  ],
+  "invocation_method_attempted": "Claude Code native Skill tool via ListSkills + Skill API",
+  "native_skill_discoverable": false,
+  "native_invocation_result": "NOT_VERIFIED",
+  "reason": "Claude Code Skill registry does not discover .claude/skills/ directories deployed mid-session. The skill must be present before session start or registered through the claude.ai platform skill system. Mid-session directory placement is not equivalent to native skill registration.",
+  "alternative_validation": {
+    "method": "JavaScript pipeline simulation importing validate.mjs and parsing SKILL.md",
+    "tests_run": 12,
+    "tests_passed": 12,
+    "status": "PIPELINE_VERIFIED_NOT_NATIVE_INVOCATION",
+    "note": "The candidate skill's validation pipeline, stage structure, and reference files are functionally correct. However, this was tested via direct module import, not through Claude Code's /slash-command invocation mechanism."
+  },
+  "recommendation": "To verify native Skill invocation: (1) register the skill through claude.ai's skill creation system, or (2) start a new session with .claude/skills/ pre-populated in the repository, or (3) use the skill-creator skill to formally register it.",
+  "disclaimer": "RESEARCH_ONLY. Not a production validation."
+}
