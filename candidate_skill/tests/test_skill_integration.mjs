@@ -1,0 +1,430 @@
+/**
+ * Integration Test Suite — Universal Professional Scriptwriting Skill
+ * Tests: input validation, evidence tracing, section budgets,
+ * word counting, niche selection, HOLD conditions, script QA.
+ * Node.js ESM, no dependencies.
+ */
+
+import { readFileSync, writeFileSync } from "node:fs";
+import { validateInput, countWords, analyzeScript } from "../scripts/validate.mjs";
+
+let passed = 0;
+let failed = 0;
+const failures = [];
+const results = [];
+
+function test(id, description, fn) {
+  try {
+    const ok = fn();
+    if (ok) {
+      passed++;
+      results.push({ id, description, result: "PASS" });
+    } else {
+      failed++;
+      failures.push(id);
+      results.push({ id, description, result: "FAIL", reason: "Assertion returned false" });
+      console.error(`FAIL ${id}: ${description}`);
+    }
+  } catch (e) {
+    failed++;
+    failures.push(id);
+    results.push({ id, description, result: "FAIL", reason: e.message });
+    console.error(`FAIL ${id}: ${description} — ${e.message}`);
+  }
+}
+
+// Load demo fixtures
+const demoInput = JSON.parse(readFileSync(new URL("../examples/demo_input.json", import.meta.url), "utf-8"));
+const demoScript = readFileSync(new URL("../examples/demo_script.md", import.meta.url), "utf-8");
+
+// === INPUT VALIDATION TESTS ===
+
+test("INT-001", "Valid demo input passes validation", () => {
+  const r = validateInput(demoInput);
+  return r.status === "PASS" && r.holds.length === 0;
+});
+
+test("INT-002", "Missing title triggers HOLD_MISSING_IDENTITY", () => {
+  const input = { ...demoInput, title: "" };
+  const r = validateInput(input);
+  return r.status === "HOLD" && r.holds.some(h => h.type === "HOLD_MISSING_IDENTITY");
+});
+
+test("INT-003", "Missing niche triggers HOLD_MISSING_IDENTITY", () => {
+  const input = { ...demoInput, niche: "" };
+  const r = validateInput(input);
+  return r.status === "HOLD" && r.holds.some(h => h.type === "HOLD_MISSING_IDENTITY");
+});
+
+test("INT-004", "Invalid niche triggers HOLD_MISSING_IDENTITY", () => {
+  const input = { ...demoInput, niche: "N99" };
+  const r = validateInput(input);
+  return r.status === "HOLD" && r.holds.some(h => h.type === "HOLD_MISSING_IDENTITY");
+});
+
+test("INT-005", "Missing subject triggers HOLD_MISSING_IDENTITY", () => {
+  const input = { ...demoInput, subject: "" };
+  const r = validateInput(input);
+  return r.status === "HOLD";
+});
+
+test("INT-006", "Missing mechanism triggers HOLD_MISSING_IDENTITY", () => {
+  const input = { ...demoInput, mechanism: "" };
+  const r = validateInput(input);
+  return r.status === "HOLD";
+});
+
+test("INT-007", "Missing uncertainty triggers HOLD_MISSING_IDENTITY", () => {
+  const input = { ...demoInput, uncertainty: "" };
+  const r = validateInput(input);
+  return r.status === "HOLD";
+});
+
+// === BLOCKED/QUARANTINED SOURCE TESTS ===
+
+test("INT-008", "F-190 in evidence triggers HOLD_SOURCE_ROLE", () => {
+  const input = {
+    ...demoInput,
+    evidence: [{ id: "F-190", source: "test", epistemic_status: "qualified" }]
+  };
+  const r = validateInput(input);
+  return r.holds.some(h => h.type === "HOLD_SOURCE_ROLE" && h.detail.includes("F-190"));
+});
+
+test("INT-009", "R052 in evidence triggers HOLD_SOURCE_ROLE", () => {
+  const input = {
+    ...demoInput,
+    evidence: [{ id: "R052", source: "test", epistemic_status: "qualified" }]
+  };
+  const r = validateInput(input);
+  return r.holds.some(h => h.type === "HOLD_SOURCE_ROLE" && h.detail.includes("R052"));
+});
+
+test("INT-010", "K029 in evidence triggers HOLD_SOURCE_ROLE", () => {
+  const input = {
+    ...demoInput,
+    evidence: [{ id: "K029", source: "test", epistemic_status: "qualified" }]
+  };
+  const r = validateInput(input);
+  return r.holds.some(h => h.type === "HOLD_SOURCE_ROLE" && h.detail.includes("K029"));
+});
+
+test("INT-011", "K030 in evidence triggers HOLD_SOURCE_ROLE", () => {
+  const input = {
+    ...demoInput,
+    evidence: [{ id: "K030", source: "test", epistemic_status: "qualified" }]
+  };
+  const r = validateInput(input);
+  return r.holds.some(h => h.type === "HOLD_SOURCE_ROLE");
+});
+
+test("INT-012", "K031 in evidence triggers HOLD_SOURCE_ROLE", () => {
+  const input = {
+    ...demoInput,
+    evidence: [{ id: "K031", source: "test", epistemic_status: "qualified" }]
+  };
+  const r = validateInput(input);
+  return r.holds.some(h => h.type === "HOLD_SOURCE_ROLE");
+});
+
+// === EVIDENCE PROVENANCE TESTS ===
+
+test("INT-013", "Evidence without source triggers HOLD_DISPUTED_PROVENANCE", () => {
+  const input = {
+    ...demoInput,
+    evidence: [{ id: "E-TEST", epistemic_status: "qualified" }]
+  };
+  const r = validateInput(input);
+  return r.holds.some(h => h.type === "HOLD_DISPUTED_PROVENANCE");
+});
+
+test("INT-014", "Evidence without ID triggers HOLD_DISPUTED_PROVENANCE", () => {
+  const input = {
+    ...demoInput,
+    evidence: [{ source: "test", epistemic_status: "qualified" }]
+  };
+  const r = validateInput(input);
+  return r.holds.some(h => h.type === "HOLD_DISPUTED_PROVENANCE");
+});
+
+// === NICHE ADAPTER TESTS ===
+
+test("INT-015", "N01 stale forecast triggers HOLD_STALE_FORECAST", () => {
+  const input = {
+    ...demoInput,
+    niche: "N01",
+    niche_context: {
+      issued_at: "2035-01-01T09:00:00Z",
+      valid_until: "2035-01-01T09:30:00Z"
+    }
+  };
+  const r = validateInput(input);
+  return r.holds.some(h => h.type === "HOLD_STALE_FORECAST");
+});
+
+test("INT-016", "N01 historical forecast does not trigger HOLD_STALE_FORECAST", () => {
+  const input = {
+    ...demoInput,
+    niche: "N01",
+    niche_context: {
+      issued_at: "2035-01-01T09:00:00Z",
+      valid_until: "2035-01-01T09:30:00Z",
+      historical_context: true
+    }
+  };
+  const r = validateInput(input);
+  return !r.holds.some(h => h.type === "HOLD_STALE_FORECAST");
+});
+
+test("INT-017", "N03 invented quote triggers HOLD_HARM", () => {
+  const input = {
+    ...demoInput,
+    niche: "N03",
+    niche_context: { invented_quote_as_historical: true }
+  };
+  const r = validateInput(input);
+  return r.holds.some(h => h.type === "HOLD_HARM");
+});
+
+test("INT-018", "N04 synthetic video triggers HOLD_HARM", () => {
+  const input = {
+    ...demoInput,
+    niche: "N04",
+    niche_context: { synthetic_video_claimed_authentic: true }
+  };
+  const r = validateInput(input);
+  return r.holds.some(h => h.type === "HOLD_HARM");
+});
+
+test("INT-019", "N05 valid input with proper evidence passes", () => {
+  const r = validateInput(demoInput);
+  return r.status === "PASS" && r.stages.niche_check === "PASS";
+});
+
+// === TITLE PREMISE TESTS ===
+
+test("INT-020", "Title with 'Confirmed' but uncertainty != confirmed triggers HOLD_TITLE_PREMISE", () => {
+  const input = {
+    ...demoInput,
+    title: "Scientists Confirmed the Sleep Effect",
+    uncertainty: "preliminary"
+  };
+  const r = validateInput(input);
+  return r.holds.some(h => h.type === "HOLD_TITLE_PREMISE");
+});
+
+test("INT-021", "Title with 'Proven' and uncertainty 'may' triggers HOLD_TITLE_PREMISE", () => {
+  const input = {
+    ...demoInput,
+    title: "Proven Link Between Sleep and Memory",
+    uncertainty: "may"
+  };
+  const r = validateInput(input);
+  return r.holds.some(h => h.type === "HOLD_TITLE_PREMISE");
+});
+
+test("INT-022", "Neutral title with uncertainty 'is believed to' passes", () => {
+  const r = validateInput(demoInput);
+  return !r.holds.some(h => h.type === "HOLD_TITLE_PREMISE");
+});
+
+// === WORD COUNTING TESTS ===
+
+test("INT-023", "countWords counts correctly", () => {
+  return countWords("one two three four five") === 5;
+});
+
+test("INT-024", "countWords handles newlines", () => {
+  return countWords("one two\nthree four\nfive") === 5;
+});
+
+test("INT-025", "countWords handles empty string", () => {
+  return countWords("") === 0;
+});
+
+test("INT-026", "countWords handles multiple spaces", () => {
+  return countWords("one   two   three") === 3;
+});
+
+// === SCRIPT ANALYSIS TESTS ===
+
+test("INT-027", "Demo script has all 7 evidence items referenced", () => {
+  const analysis = analyzeScript(demoScript, demoInput);
+  return analysis.evidence_referenced.length === 7 && analysis.evidence_unreferenced.length === 0;
+});
+
+test("INT-028", "Demo script total words are within target range", () => {
+  const analysis = analyzeScript(demoScript, demoInput);
+  return analysis.total_words >= 2500 && analysis.total_words <= 3300;
+});
+
+test("INT-029", "Demo script has no epistemic upgrades", () => {
+  const analysis = analyzeScript(demoScript, demoInput);
+  return analysis.epistemic_integrity === "PASS";
+});
+
+test("INT-030", "Demo script maintains subject consistency", () => {
+  const analysis = analyzeScript(demoScript, demoInput);
+  return analysis.subject_consistency === "PASS";
+});
+
+test("INT-031", "Demo script maintains object consistency", () => {
+  const analysis = analyzeScript(demoScript, demoInput);
+  return analysis.object_consistency === "PASS";
+});
+
+test("INT-032", "Script analysis detects missing evidence references", () => {
+  const fakeInput = {
+    ...demoInput,
+    evidence: [
+      ...demoInput.evidence,
+      { id: "E-999", source: "fake", epistemic_status: "hypothetical" }
+    ]
+  };
+  const analysis = analyzeScript(demoScript, fakeInput);
+  return analysis.evidence_unreferenced.includes("E-999");
+});
+
+test("INT-033", "Script analysis detects epistemic upgrade in text", () => {
+  // Insert the epistemic violation before the Evidence Register section
+  const marker = "## Evidence Register";
+  const idx = demoScript.indexOf(marker);
+  const fakeScript = idx > 0
+    ? demoScript.slice(0, idx) + "\n## Test Section\n\nThis proves that spindles cause memory enhancement.\n\n" + demoScript.slice(idx)
+    : demoScript + "\n## Test Section\n\nThis proves that spindles cause memory enhancement.\n";
+  const analysis = analyzeScript(fakeScript, demoInput);
+  return analysis.epistemic_upgrades.length > 0;
+});
+
+// === EVIDENCE REGISTER TESTS ===
+
+test("INT-034", "Evidence register has correct count", () => {
+  const r = validateInput(demoInput);
+  return r.evidence_register.length === 7;
+});
+
+test("INT-035", "B70 source gets caveat in evidence register", () => {
+  const input = {
+    ...demoInput,
+    evidence: [{ id: "B70", source: "test source", epistemic_status: "qualified" }]
+  };
+  const r = validateInput(input);
+  const entry = r.evidence_register.find(e => e.id === "B70");
+  return entry && entry.caveats.length > 0 && entry.caveats[0].includes("access restrictions");
+});
+
+// === WORKFLOW STAGE TESTS ===
+
+test("INT-036", "All stages pass for valid demo input", () => {
+  const r = validateInput(demoInput);
+  return r.stages.topic_intake === "PASS" &&
+         r.stages.evidence_validation === "PASS" &&
+         r.stages.niche_check === "PASS" &&
+         r.stages.title_check === "PASS";
+});
+
+test("INT-037", "Stage breakdown isolates HOLD to correct stage", () => {
+  const input = { ...demoInput, title: "Confirmed Sleep Memory Effect", uncertainty: "may" };
+  const r = validateInput(input);
+  return r.stages.topic_intake === "PASS" &&
+         r.stages.evidence_validation === "PASS" &&
+         r.stages.title_check === "HOLD";
+});
+
+// === NICHE ALL-VALID TESTS ===
+
+test("INT-038", "N01 with valid historical context passes", () => {
+  const input = {
+    ...demoInput,
+    niche: "N01",
+    niche_context: {
+      issued_at: "2020-01-01T09:00:00Z",
+      valid_until: "2020-01-01T09:30:00Z",
+      historical_context: true
+    }
+  };
+  const r = validateInput(input);
+  return r.stages.niche_check === "PASS";
+});
+
+test("INT-039", "N02 without operational claims passes", () => {
+  const input = { ...demoInput, niche: "N02" };
+  const r = validateInput(input);
+  return r.stages.niche_check === "PASS";
+});
+
+test("INT-040", "N03 without invented quotes passes", () => {
+  const input = { ...demoInput, niche: "N03" };
+  const r = validateInput(input);
+  return r.stages.niche_check === "PASS";
+});
+
+test("INT-041", "N04 without synthetic video passes", () => {
+  const input = { ...demoInput, niche: "N04" };
+  const r = validateInput(input);
+  return r.stages.niche_check === "PASS";
+});
+
+test("INT-042", "Script has multiple sections with word budgets", () => {
+  const analysis = analyzeScript(demoScript, demoInput);
+  return analysis.sections.length >= 6 && analysis.sections.every(s => s.words > 50);
+});
+
+// === COMPREHENSIVE INPUT TESTS ===
+
+test("INT-043", "Empty evidence list produces warning but not HOLD", () => {
+  const input = { ...demoInput, evidence: [] };
+  const r = validateInput(input);
+  return r.warnings.some(w => w.includes("No evidence")) && r.status === "PASS";
+});
+
+test("INT-044", "Non-standard epistemic status produces warning", () => {
+  const input = {
+    ...demoInput,
+    evidence: [{ id: "E-TEST", source: "test", epistemic_status: "maybe" }]
+  };
+  const r = validateInput(input);
+  return r.warnings.some(w => w.includes("non-standard"));
+});
+
+test("INT-045", "Multiple HOLD types can coexist", () => {
+  const input = {
+    ...demoInput,
+    title: "",
+    niche: "N04",
+    niche_context: { synthetic_video_claimed_authentic: true },
+    evidence: [{ id: "F-190", source: "test", epistemic_status: "qualified" }]
+  };
+  const r = validateInput(input);
+  const holdTypes = new Set(r.holds.map(h => h.type));
+  return holdTypes.has("HOLD_MISSING_IDENTITY") && holdTypes.has("HOLD_HARM") && holdTypes.has("HOLD_SOURCE_ROLE");
+});
+
+// === Print results ===
+const total = passed + failed;
+console.log(`\n=== Skill Integration Test Results ===`);
+console.log(`Total: ${total}`);
+console.log(`Passed: ${passed}`);
+console.log(`Failed: ${failed}`);
+if (failures.length > 0) {
+  console.log(`Failures: ${failures.join(", ")}`);
+}
+
+// Write receipt
+const receipt = {
+  executed_at: new Date().toISOString(),
+  suite: "skill_integration",
+  total,
+  passed,
+  failed,
+  results,
+  disclaimer: "Integration tests for candidate skill. Not a production validation."
+};
+
+writeFileSync(
+  new URL("./INTEGRATION_TEST_RECEIPT.json", import.meta.url),
+  JSON.stringify(receipt, null, 2) + "\n"
+);
+console.log(`\nReceipt written to tests/INTEGRATION_TEST_RECEIPT.json`);
+
+process.exit(failed > 0 ? 1 : 0);

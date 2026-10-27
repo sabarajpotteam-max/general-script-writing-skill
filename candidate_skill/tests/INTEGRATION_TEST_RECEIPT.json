@@ -1,0 +1,235 @@
+{
+  "executed_at": "2026-10-27T22:11:21.702Z",
+  "suite": "skill_integration",
+  "total": 45,
+  "passed": 45,
+  "failed": 0,
+  "results": [
+    {
+      "id": "INT-001",
+      "description": "Valid demo input passes validation",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-002",
+      "description": "Missing title triggers HOLD_MISSING_IDENTITY",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-003",
+      "description": "Missing niche triggers HOLD_MISSING_IDENTITY",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-004",
+      "description": "Invalid niche triggers HOLD_MISSING_IDENTITY",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-005",
+      "description": "Missing subject triggers HOLD_MISSING_IDENTITY",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-006",
+      "description": "Missing mechanism triggers HOLD_MISSING_IDENTITY",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-007",
+      "description": "Missing uncertainty triggers HOLD_MISSING_IDENTITY",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-008",
+      "description": "F-190 in evidence triggers HOLD_SOURCE_ROLE",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-009",
+      "description": "R052 in evidence triggers HOLD_SOURCE_ROLE",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-010",
+      "description": "K029 in evidence triggers HOLD_SOURCE_ROLE",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-011",
+      "description": "K030 in evidence triggers HOLD_SOURCE_ROLE",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-012",
+      "description": "K031 in evidence triggers HOLD_SOURCE_ROLE",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-013",
+      "description": "Evidence without source triggers HOLD_DISPUTED_PROVENANCE",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-014",
+      "description": "Evidence without ID triggers HOLD_DISPUTED_PROVENANCE",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-015",
+      "description": "N01 stale forecast triggers HOLD_STALE_FORECAST",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-016",
+      "description": "N01 historical forecast does not trigger HOLD_STALE_FORECAST",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-017",
+      "description": "N03 invented quote triggers HOLD_HARM",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-018",
+      "description": "N04 synthetic video triggers HOLD_HARM",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-019",
+      "description": "N05 valid input with proper evidence passes",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-020",
+      "description": "Title with 'Confirmed' but uncertainty != confirmed triggers HOLD_TITLE_PREMISE",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-021",
+      "description": "Title with 'Proven' and uncertainty 'may' triggers HOLD_TITLE_PREMISE",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-022",
+      "description": "Neutral title with uncertainty 'is believed to' passes",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-023",
+      "description": "countWords counts correctly",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-024",
+      "description": "countWords handles newlines",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-025",
+      "description": "countWords handles empty string",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-026",
+      "description": "countWords handles multiple spaces",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-027",
+      "description": "Demo script has all 7 evidence items referenced",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-028",
+      "description": "Demo script total words are within target range",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-029",
+      "description": "Demo script has no epistemic upgrades",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-030",
+      "description": "Demo script maintains subject consistency",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-031",
+      "description": "Demo script maintains object consistency",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-032",
+      "description": "Script analysis detects missing evidence references",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-033",
+      "description": "Script analysis detects epistemic upgrade in text",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-034",
+      "description": "Evidence register has correct count",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-035",
+      "description": "B70 source gets caveat in evidence register",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-036",
+      "description": "All stages pass for valid demo input",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-037",
+      "description": "Stage breakdown isolates HOLD to correct stage",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-038",
+      "description": "N01 with valid historical context passes",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-039",
+      "description": "N02 without operational claims passes",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-040",
+      "description": "N03 without invented quotes passes",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-041",
+      "description": "N04 without synthetic video passes",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-042",
+      "description": "Script has multiple sections with word budgets",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-043",
+      "description": "Empty evidence list produces warning but not HOLD",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-044",
+      "description": "Non-standard epistemic status produces warning",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-045",
+      "description": "Multiple HOLD types can coexist",
+      "result": "PASS"
+    }
+  ],
+  "disclaimer": "Integration tests for candidate skill. Not a production validation."
+}

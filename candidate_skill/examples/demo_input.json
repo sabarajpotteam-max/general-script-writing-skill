@@ -1,0 +1,70 @@
+{
+  "title": "The Memory Thief: How Sleep Architecture Shapes What We Remember",
+  "niche": "N05",
+  "subject": "sleep spindle activity during Stage 2 sleep",
+  "object": "declarative memory consolidation in healthy adults",
+  "mechanism": "thalamic oscillation gating selective hippocampal-neocortical transfer",
+  "uncertainty": "is believed to",
+  "target_words": 3000,
+  "evidence": [
+    {
+      "id": "E-001",
+      "description": "14-night longitudinal study: participants with higher sleep spindle density during Stage 2 sleep showed 23% better recall on declarative memory tasks (n=87).",
+      "source": "Osei, A. (2019). 'Sleep Spindle Density and Declarative Memory Consolidation.' Journal of Cognitive Neuroscience Research, 34(2), 112-128. Whitfield University.",
+      "source_type": "primary_research",
+      "epistemic_status": "preliminary",
+      "fictional": true
+    },
+    {
+      "id": "E-002",
+      "description": "Partial replication in Japanese cohort: spindle-memory correlation confirmed but effect size smaller (17% vs 23%) and limited to verbal declarative memory (n=64).",
+      "source": "Tanaka, K. & Hayashi, M. (2020). 'Cross-Cultural Replication of Sleep Spindle Memory Effects.' Osaka Cognitive Institute Technical Report 2020-07.",
+      "source_type": "replication_study",
+      "epistemic_status": "preliminary",
+      "fictional": true
+    },
+    {
+      "id": "E-003",
+      "description": "Counter-analysis: after controlling for total sleep time and sleep efficiency, spindle-memory correlation reduced to non-significance in re-analyzed data (n=151 pooled).",
+      "source": "Chen, S. & Lindström, E. (2021). 'Sleep Quality Confounds in Spindle Research: A Re-Analysis.' Nordic Sleep Research Centre, Sleep Science Reviews, 8(4), 301-315.",
+      "source_type": "critique",
+      "epistemic_status": "disputed",
+      "fictional": true
+    },
+    {
+      "id": "E-004",
+      "description": "Targeted memory reactivation (TMR) during Stage 2 sleep: sound cues associated with specific learning items during wakefulness were replayed during sleep. Memory enhancement was selective to cued items only (n=112, randomized crossover).",
+      "source": "Osei, A. & Tanaka, K. (2022). 'Causal Evidence for Spindle-Mediated Memory Consolidation via Targeted Reactivation.' Whitfield-Osaka Collaborative, Nature Human Behaviour (fictional), 6(3), 445-460.",
+      "source_type": "experimental",
+      "epistemic_status": "replicated",
+      "fictional": true
+    },
+    {
+      "id": "E-005",
+      "description": "Meta-analysis of 12 studies (total n=1,340): pooled effect of spindle density on declarative memory is moderate (Cohen's d = 0.41, 95% CI [0.28, 0.54]) with significant heterogeneity (I² = 62%).",
+      "source": "Webb, M. et al. (2023). 'Sleep Spindles and Memory: A Quantitative Synthesis.' Cognitive Psychology Meta-Reviews, 15(1), 78-99.",
+      "source_type": "meta_analysis",
+      "epistemic_status": "qualified",
+      "fictional": true
+    },
+    {
+      "id": "E-006",
+      "description": "Observational: sleep spindle density declines approximately 2% per decade after age 30, correlating with age-related declarative memory decline in longitudinal cohort (n=420, 12-year follow-up).",
+      "source": "Rivera, J. & Osei, A. (2023). 'Age-Related Spindle Decline and Memory Trajectories.' Whitfield Longitudinal Aging Study, Neurobiology of Aging (fictional), 112, 34-47.",
+      "source_type": "observational_longitudinal",
+      "epistemic_status": "preliminary",
+      "fictional": true
+    },
+    {
+      "id": "E-007",
+      "description": "Pilot clinical trial: transcranial alternating current stimulation (tACS) at spindle frequency (12-15 Hz) during Stage 2 sleep increased spindle density by 31% and next-day word-pair recall by 14% compared to sham (n=36, double-blind).",
+      "source": "Park, J. & Chen, S. (2024). 'Spindle Enhancement via tACS: A Double-Blind Pilot.' Nordic-Whitfield Sleep Intervention Consortium, Preliminary Report.",
+      "source_type": "pilot_trial",
+      "epistemic_status": "preliminary",
+      "fictional": true
+    }
+  ],
+  "synthetic": true,
+  "all_evidence_fictional": true,
+  "disclaimer": "All institutions, researchers, journals, studies, and findings in this input are entirely fictional. Created for demonstration purposes only."
+}

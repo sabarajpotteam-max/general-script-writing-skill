@@ -1,0 +1,54 @@
+{
+  "sections": [
+    {
+      "section": "HOOK: The Pattern in the Static",
+      "words": 224
+    },
+    {
+      "section": "SECTION 1: The Problem — Why We Forget",
+      "words": 294
+    },
+    {
+      "section": "SECTION 2: The Discovery — Spindles and Recall",
+      "words": 384
+    },
+    {
+      "section": "SECTION 3: The Mechanism — How Spindles Gate Memory",
+      "words": 344
+    },
+    {
+      "section": "SECTION 4: The Challenge — Chen's Counterargument",
+      "words": 293
+    },
+    {
+      "section": "SECTION 5: The Resolution — Targeted Reactivation",
+      "words": 476
+    },
+    {
+      "section": "SECTION 6: Implications — What This Means",
+      "words": 355
+    },
+    {
+      "section": "OUTRO: Return to the Lab",
+      "words": 130
+    }
+  ],
+  "total_words": 2500,
+  "target_words": 3000,
+  "word_budget_status": "PASS",
+  "evidence_referenced": [
+    "E-001",
+    "E-002",
+    "E-003",
+    "E-004",
+    "E-005",
+    "E-006",
+    "E-007"
+  ],
+  "evidence_unreferenced": [],
+  "evidence_traceability": "PASS",
+  "subject_consistency": "PASS",
+  "object_consistency": "PASS",
+  "epistemic_upgrades": [],
+  "epistemic_integrity": "PASS"
+}
