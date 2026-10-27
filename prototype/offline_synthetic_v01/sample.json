@@ -1,0 +1,48 @@
+{
+  "run_id": "fiction-001",
+  "synthetic": true,
+  "branch_isolation_broken": false,
+  "historical_id_rekey_attempt": false,
+  "public_transcript_export_attempt": false,
+  "request_release": false,
+  "niche": "N05",
+  "niche_context": {},
+  "topic": {
+    "subject": "Orion Station",
+    "object": "Pale Comet",
+    "mechanism": "a scheduled fictional observation",
+    "uncertainty": "could"
+  },
+  "candidate_title": "How Could Orion Station Observe Pale Comet?",
+  "original_title": "Could Orion Station Observe Pale Comet?",
+  "author_id": "fictional-author",
+  "authors": ["fictional-author"],
+  "reviewer_id": "fictional-reviewer",
+  "review_overwrote_dissent": false,
+  "revision_changed_after_review": false,
+  "sources": [
+    {
+      "id": "SYN-1",
+      "access_state": "full_read",
+      "role": "admissible",
+      "can_use_for_synthetic": true,
+      "can_redistribute": false,
+      "redistribution_attempted": false,
+      "hash_mismatch": false,
+      "independence_family": "invented-lab-1"
+    }
+  ],
+  "claims": [
+    {
+      "id": "C-1",
+      "text": "the imaginary telescope may collect two simulated observations",
+      "epistemic_status": "qualified",
+      "reviewed_at": "2035-05-05T11:00:00Z",
+      "reviewed_by": "fictional-reviewer",
+      "unverified_retention_promise": false,
+      "severity_three_unsupported": false,
+      "metric_substitution_as_retention": false
+    }
+  ],
+  "as_of": "2035-05-06T12:00:00Z"
+}

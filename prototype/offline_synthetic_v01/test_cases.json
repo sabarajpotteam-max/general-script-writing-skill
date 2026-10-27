@@ -1,0 +1,215 @@
+[
+  {
+    "id": "QA-001",
+    "expected": "HOLD_MISSING_IDENTITY",
+    "patches": [{ "path": "branch_isolation_broken", "value": true }]
+  },
+  {
+    "id": "QA-002",
+    "expected": "HOLD_MISSING_IDENTITY",
+    "patches": [{ "path": "sources.0.access_state", "value": null }]
+  },
+  {
+    "id": "QA-003",
+    "expected": "HOLD_MISSING_IDENTITY",
+    "patches": [{ "path": "historical_id_rekey_attempt", "value": true }]
+  },
+  {
+    "id": "QA-004",
+    "expected": "HOLD_RIGHTS",
+    "patches": [{ "path": "public_transcript_export_attempt", "value": true }]
+  },
+  {
+    "id": "QA-005",
+    "expected": "HOLD_RIGHTS",
+    "patches": [{ "path": "sources.0.can_use_for_synthetic", "value": false }]
+  },
+  {
+    "id": "QA-006",
+    "expected": "HOLD_DISPUTED_PROVENANCE",
+    "patches": [{ "path": "sources.0.hash_mismatch", "value": true }]
+  },
+  {
+    "id": "QA-007",
+    "expected": "HOLD_ORIGINAL_MISSING",
+    "patches": [{ "path": "sources.0.id", "value": "B70" }]
+  },
+  {
+    "id": "QA-008",
+    "expected": "HOLD_SOURCE_ROLE",
+    "patches": [{ "path": "sources.0.id", "value": "F-190" }]
+  },
+  {
+    "id": "QA-009",
+    "expected": "HOLD_SOURCE_ROLE",
+    "patches": [{ "path": "sources.0.id", "value": "R052" }]
+  },
+  {
+    "id": "QA-010",
+    "expected": "HOLD_UNVERIFIED_FACT",
+    "patches": [{ "path": "claims.0.unverified_retention_promise", "value": true }]
+  },
+  {
+    "id": "QA-011",
+    "expected": "HOLD_STALE_FORECAST",
+    "patches": [
+      { "path": "niche_context", "value": { "issuer": "FICTIONAL-AGENCY", "locality": "Fiction County", "issued_at": "2035-05-05T09:00:00Z", "valid_until": "2035-05-05T10:00:00Z" } },
+      { "path": "niche", "value": "N01" }
+    ]
+  },
+  {
+    "id": "QA-012",
+    "expected": "HOLD_UNVERIFIED_FACT",
+    "patches": [
+      { "path": "niche_context", "value": { "issuer": "FICTIONAL-AGENCY", "locality": "Fiction County", "issued_at": "2035-05-05T09:00:00Z", "valid_until": "2035-05-07T10:00:00Z", "projection_labelled_official_warning": true } },
+      { "path": "niche", "value": "N01" }
+    ]
+  },
+  {
+    "id": "QA-013",
+    "expected": "RESEARCH_ONLY_TERMINAL",
+    "patches": [
+      { "path": "niche_context", "value": { "issuer": "FICTIONAL-AGENCY", "locality": "Fiction County", "issued_at": "2035-05-05T09:00:00Z", "valid_until": "2035-05-05T10:00:00Z", "historical_context": true } },
+      { "path": "niche", "value": "N01" }
+    ]
+  },
+  {
+    "id": "QA-014",
+    "expected": "HOLD_UNVERIFIED_FACT",
+    "patches": [
+      { "path": "niche_context", "value": { "claimed_operational": true, "technology_stage": "contracted" } },
+      { "path": "niche", "value": "N02" }
+    ]
+  },
+  {
+    "id": "QA-015",
+    "expected": "HOLD_UNVERIFIED_FACT",
+    "patches": [
+      { "path": "niche_context", "value": { "single_party_claim_as_fact": true } },
+      { "path": "niche", "value": "N02" }
+    ]
+  },
+  {
+    "id": "QA-016",
+    "expected": "HOLD_TITLE_PREMISE",
+    "patches": [{ "path": "candidate_title", "value": "Orion Station Confirmed It Destroyed Pale Comet" }]
+  },
+  {
+    "id": "QA-017",
+    "expected": "HOLD_HARM",
+    "patches": [
+      { "path": "niche_context", "value": { "invented_quote_as_historical": true } },
+      { "path": "niche", "value": "N03" }
+    ]
+  },
+  {
+    "id": "QA-018",
+    "expected": "HOLD_REVIEW",
+    "patches": [
+      { "path": "niche_context", "value": { "translation_lost_qualifier": true } },
+      { "path": "niche", "value": "N03" }
+    ]
+  },
+  {
+    "id": "QA-019",
+    "expected": "HOLD_HARM",
+    "patches": [
+      { "path": "niche_context", "value": { "reenacted_survivor_as_archival": true } },
+      { "path": "niche", "value": "N03" }
+    ]
+  },
+  {
+    "id": "QA-020",
+    "expected": "HOLD_HARM",
+    "patches": [
+      { "path": "niche_context", "value": { "synthetic_video_claimed_authentic": true } },
+      { "path": "niche", "value": "N04" }
+    ]
+  },
+  {
+    "id": "QA-021",
+    "expected": "HOLD_UNVERIFIED_FACT",
+    "patches": [
+      { "path": "niche_context", "value": { "provisional_casualties_called_final": true } },
+      { "path": "niche", "value": "N04" }
+    ]
+  },
+  {
+    "id": "QA-022",
+    "expected": "HOLD_UNVERIFIED_FACT",
+    "patches": [
+      { "path": "niche_context", "value": { "single_climate_cause_without_study": true } },
+      { "path": "niche", "value": "N04" }
+    ]
+  },
+  {
+    "id": "QA-023",
+    "expected": "HOLD_SOURCE_ROLE",
+    "patches": [{ "path": "niche_context", "value": { "ttspeech_wpm_as_human_law": true } }]
+  },
+  {
+    "id": "QA-024",
+    "expected": "HOLD_SOURCE_ROLE",
+    "patches": [{ "path": "niche_context", "value": { "mooc_hook_as_video_law": true } }]
+  },
+  {
+    "id": "QA-025",
+    "expected": "RESEARCH_ONLY_TERMINAL",
+    "patches": [{ "path": "optional_structure", "value": "three-act" }]
+  },
+  {
+    "id": "QA-026",
+    "expected": "HOLD_REVIEW",
+    "patches": [{ "path": "reviewer_id", "value": "fictional-author" }]
+  },
+  {
+    "id": "QA-027",
+    "expected": "HOLD_REVIEW",
+    "patches": [{ "path": "review_overwrote_dissent", "value": true }]
+  },
+  {
+    "id": "QA-028",
+    "expected": "HOLD_UNVERIFIED_FACT",
+    "patches": [{ "path": "claims.0.severity_three_unsupported", "value": true }]
+  },
+  {
+    "id": "QA-029",
+    "expected": "HOLD_REVIEW",
+    "patches": [{ "path": "niche_context", "value": { "inaccessible_source_scored_zero": true } }]
+  },
+  {
+    "id": "QA-030",
+    "expected": "HOLD_REVIEW",
+    "patches": [{ "path": "niche_context", "value": { "false_media_audio_inference": true } }]
+  },
+  {
+    "id": "QA-031",
+    "expected": "HOLD_REVIEW",
+    "patches": [{ "path": "niche_context", "value": { "accessibility_errors": true } }]
+  },
+  {
+    "id": "QA-032",
+    "expected": "HOLD_UNVERIFIED_FACT",
+    "patches": [{ "path": "claims.0.metric_substitution_as_retention", "value": true }]
+  },
+  {
+    "id": "QA-033",
+    "expected": "HOLD_NOT_APPROVED",
+    "patches": [{ "path": "niche_context", "value": { "rct_success_without_study": true } }]
+  },
+  {
+    "id": "QA-034",
+    "expected": "HOLD_NEEDS_RECHECK",
+    "patches": [{ "path": "revision_changed_after_review", "value": true }]
+  },
+  {
+    "id": "QA-035",
+    "expected": "HOLD_NOT_APPROVED",
+    "patches": [{ "path": "request_release", "value": true }]
+  },
+  {
+    "id": "QA-036",
+    "expected": "HOLD_RIGHTS",
+    "patches": [{ "path": "sources.0.redistribution_attempted", "value": true }]
+  }
+]

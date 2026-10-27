@@ -1,0 +1,373 @@
+{
+  "executed_at": "2026-10-27T21:54:25.380Z",
+  "engine_version": "0.1.0-synthetic",
+  "total_cases": 37,
+  "passed": 37,
+  "failed": 0,
+  "results": [
+    {
+      "id": "BASELINE",
+      "expected": "RESEARCH_ONLY_TERMINAL",
+      "actual_status": "RESEARCH_ONLY_TERMINAL",
+      "actual_production_allowed": false,
+      "result": "PASS"
+    },
+    {
+      "id": "QA-001",
+      "expected": "HOLD_MISSING_IDENTITY",
+      "actual_status": "HOLD",
+      "actual_hold_reasons": [
+        "HOLD_MISSING_IDENTITY"
+      ],
+      "actual_has_artifact": false,
+      "result": "PASS"
+    },
+    {
+      "id": "QA-002",
+      "expected": "HOLD_MISSING_IDENTITY",
+      "actual_status": "HOLD",
+      "actual_hold_reasons": [
+        "HOLD_MISSING_IDENTITY"
+      ],
+      "actual_has_artifact": false,
+      "result": "PASS"
+    },
+    {
+      "id": "QA-003",
+      "expected": "HOLD_MISSING_IDENTITY",
+      "actual_status": "HOLD",
+      "actual_hold_reasons": [
+        "HOLD_MISSING_IDENTITY"
+      ],
+      "actual_has_artifact": false,
+      "result": "PASS"
+    },
+    {
+      "id": "QA-004",
+      "expected": "HOLD_RIGHTS",
+      "actual_status": "HOLD",
+      "actual_hold_reasons": [
+        "HOLD_RIGHTS"
+      ],
+      "actual_has_artifact": false,
+      "result": "PASS"
+    },
+    {
+      "id": "QA-005",
+      "expected": "HOLD_RIGHTS",
+      "actual_status": "HOLD",
+      "actual_hold_reasons": [
+        "HOLD_RIGHTS"
+      ],
+      "actual_has_artifact": false,
+      "result": "PASS"
+    },
+    {
+      "id": "QA-006",
+      "expected": "HOLD_DISPUTED_PROVENANCE",
+      "actual_status": "HOLD",
+      "actual_hold_reasons": [
+        "HOLD_DISPUTED_PROVENANCE"
+      ],
+      "actual_has_artifact": false,
+      "result": "PASS"
+    },
+    {
+      "id": "QA-007",
+      "expected": "HOLD_ORIGINAL_MISSING",
+      "actual_status": "HOLD",
+      "actual_hold_reasons": [
+        "HOLD_ORIGINAL_MISSING"
+      ],
+      "actual_has_artifact": false,
+      "result": "PASS"
+    },
+    {
+      "id": "QA-008",
+      "expected": "HOLD_SOURCE_ROLE",
+      "actual_status": "HOLD",
+      "actual_hold_reasons": [
+        "HOLD_SOURCE_ROLE"
+      ],
+      "actual_has_artifact": false,
+      "result": "PASS"
+    },
+    {
+      "id": "QA-009",
+      "expected": "HOLD_SOURCE_ROLE",
+      "actual_status": "HOLD",
+      "actual_hold_reasons": [
+        "HOLD_SOURCE_ROLE"
+      ],
+      "actual_has_artifact": false,
+      "result": "PASS"
+    },
+    {
+      "id": "QA-010",
+      "expected": "HOLD_UNVERIFIED_FACT",
+      "actual_status": "HOLD",
+      "actual_hold_reasons": [
+        "HOLD_UNVERIFIED_FACT"
+      ],
+      "actual_has_artifact": false,
+      "result": "PASS"
+    },
+    {
+      "id": "QA-011",
+      "expected": "HOLD_STALE_FORECAST",
+      "actual_status": "HOLD",
+      "actual_hold_reasons": [
+        "HOLD_STALE_FORECAST"
+      ],
+      "actual_has_artifact": false,
+      "result": "PASS"
+    },
+    {
+      "id": "QA-012",
+      "expected": "HOLD_UNVERIFIED_FACT",
+      "actual_status": "HOLD",
+      "actual_hold_reasons": [
+        "HOLD_UNVERIFIED_FACT"
+      ],
+      "actual_has_artifact": false,
+      "result": "PASS"
+    },
+    {
+      "id": "QA-013",
+      "expected": "RESEARCH_ONLY_TERMINAL",
+      "actual_status": "RESEARCH_ONLY_TERMINAL",
+      "actual_hold_reasons": [],
+      "actual_has_artifact": true,
+      "result": "PASS"
+    },
+    {
+      "id": "QA-014",
+      "expected": "HOLD_UNVERIFIED_FACT",
+      "actual_status": "HOLD",
+      "actual_hold_reasons": [
+        "HOLD_UNVERIFIED_FACT"
+      ],
+      "actual_has_artifact": false,
+      "result": "PASS"
+    },
+    {
+      "id": "QA-015",
+      "expected": "HOLD_UNVERIFIED_FACT",
+      "actual_status": "HOLD",
+      "actual_hold_reasons": [
+        "HOLD_UNVERIFIED_FACT"
+      ],
+      "actual_has_artifact": false,
+      "result": "PASS"
+    },
+    {
+      "id": "QA-016",
+      "expected": "HOLD_TITLE_PREMISE",
+      "actual_status": "HOLD",
+      "actual_hold_reasons": [
+        "HOLD_TITLE_PREMISE"
+      ],
+      "actual_has_artifact": false,
+      "result": "PASS"
+    },
+    {
+      "id": "QA-017",
+      "expected": "HOLD_HARM",
+      "actual_status": "HOLD",
+      "actual_hold_reasons": [
+        "HOLD_HARM"
+      ],
+      "actual_has_artifact": false,
+      "result": "PASS"
+    },
+    {
+      "id": "QA-018",
+      "expected": "HOLD_REVIEW",
+      "actual_status": "HOLD",
+      "actual_hold_reasons": [
+        "HOLD_REVIEW"
+      ],
+      "actual_has_artifact": false,
+      "result": "PASS"
+    },
+    {
+      "id": "QA-019",
+      "expected": "HOLD_HARM",
+      "actual_status": "HOLD",
+      "actual_hold_reasons": [
+        "HOLD_HARM"
+      ],
+      "actual_has_artifact": false,
+      "result": "PASS"
+    },
+    {
+      "id": "QA-020",
+      "expected": "HOLD_HARM",
+      "actual_status": "HOLD",
+      "actual_hold_reasons": [
+        "HOLD_HARM"
+      ],
+      "actual_has_artifact": false,
+      "result": "PASS"
+    },
+    {
+      "id": "QA-021",
+      "expected": "HOLD_UNVERIFIED_FACT",
+      "actual_status": "HOLD",
+      "actual_hold_reasons": [
+        "HOLD_UNVERIFIED_FACT"
+      ],
+      "actual_has_artifact": false,
+      "result": "PASS"
+    },
+    {
+      "id": "QA-022",
+      "expected": "HOLD_UNVERIFIED_FACT",
+      "actual_status": "HOLD",
+      "actual_hold_reasons": [
+        "HOLD_UNVERIFIED_FACT"
+      ],
+      "actual_has_artifact": false,
+      "result": "PASS"
+    },
+    {
+      "id": "QA-023",
+      "expected": "HOLD_SOURCE_ROLE",
+      "actual_status": "HOLD",
+      "actual_hold_reasons": [
+        "HOLD_SOURCE_ROLE"
+      ],
+      "actual_has_artifact": false,
+      "result": "PASS"
+    },
+    {
+      "id": "QA-024",
+      "expected": "HOLD_SOURCE_ROLE",
+      "actual_status": "HOLD",
+      "actual_hold_reasons": [
+        "HOLD_SOURCE_ROLE"
+      ],
+      "actual_has_artifact": false,
+      "result": "PASS"
+    },
+    {
+      "id": "QA-025",
+      "expected": "RESEARCH_ONLY_TERMINAL",
+      "actual_status": "RESEARCH_ONLY_TERMINAL",
+      "actual_hold_reasons": [],
+      "actual_has_artifact": true,
+      "result": "PASS"
+    },
+    {
+      "id": "QA-026",
+      "expected": "HOLD_REVIEW",
+      "actual_status": "HOLD",
+      "actual_hold_reasons": [
+        "HOLD_REVIEW"
+      ],
+      "actual_has_artifact": false,
+      "result": "PASS"
+    },
+    {
+      "id": "QA-027",
+      "expected": "HOLD_REVIEW",
+      "actual_status": "HOLD",
+      "actual_hold_reasons": [
+        "HOLD_REVIEW"
+      ],
+      "actual_has_artifact": false,
+      "result": "PASS"
+    },
+    {
+      "id": "QA-028",
+      "expected": "HOLD_UNVERIFIED_FACT",
+      "actual_status": "HOLD",
+      "actual_hold_reasons": [
+        "HOLD_UNVERIFIED_FACT"
+      ],
+      "actual_has_artifact": false,
+      "result": "PASS"
+    },
+    {
+      "id": "QA-029",
+      "expected": "HOLD_REVIEW",
+      "actual_status": "HOLD",
+      "actual_hold_reasons": [
+        "HOLD_REVIEW"
+      ],
+      "actual_has_artifact": false,
+      "result": "PASS"
+    },
+    {
+      "id": "QA-030",
+      "expected": "HOLD_REVIEW",
+      "actual_status": "HOLD",
+      "actual_hold_reasons": [
+        "HOLD_REVIEW"
+      ],
+      "actual_has_artifact": false,
+      "result": "PASS"
+    },
+    {
+      "id": "QA-031",
+      "expected": "HOLD_REVIEW",
+      "actual_status": "HOLD",
+      "actual_hold_reasons": [
+        "HOLD_REVIEW"
+      ],
+      "actual_has_artifact": false,
+      "result": "PASS"
+    },
+    {
+      "id": "QA-032",
+      "expected": "HOLD_UNVERIFIED_FACT",
+      "actual_status": "HOLD",
+      "actual_hold_reasons": [
+        "HOLD_UNVERIFIED_FACT"
+      ],
+      "actual_has_artifact": false,
+      "result": "PASS"
+    },
+    {
+      "id": "QA-033",
+      "expected": "HOLD_NOT_APPROVED",
+      "actual_status": "HOLD",
+      "actual_hold_reasons": [
+        "HOLD_NOT_APPROVED"
+      ],
+      "actual_has_artifact": false,
+      "result": "PASS"
+    },
+    {
+      "id": "QA-034",
+      "expected": "HOLD_NEEDS_RECHECK",
+      "actual_status": "HOLD",
+      "actual_hold_reasons": [
+        "HOLD_NEEDS_RECHECK"
+      ],
+      "actual_has_artifact": false,
+      "result": "PASS"
+    },
+    {
+      "id": "QA-035",
+      "expected": "HOLD_NOT_APPROVED",
+      "actual_status": "HOLD",
+      "actual_hold_reasons": [
+        "HOLD_NOT_APPROVED"
+      ],
+      "actual_has_artifact": false,
+      "result": "PASS"
+    },
+    {
+      "id": "QA-036",
+      "expected": "HOLD_RIGHTS",
+      "actual_status": "HOLD",
+      "actual_hold_reasons": [
+        "HOLD_RIGHTS"
+      ],
+      "actual_has_artifact": false,
+      "result": "PASS"
+    }
+  ],
+  "disclaimer": "Actual execution results from fictional fixtures only. No real-source verification, human review, or production transfer was performed."
+}
