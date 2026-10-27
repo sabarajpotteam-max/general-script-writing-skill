@@ -1,8 +1,8 @@
 {
-  "executed_at": "2026-10-27T22:28:44.816Z",
+  "executed_at": "2026-10-27T22:42:57.556Z",
   "suite": "skill_integration",
-  "total": 53,
-  "passed": 53,
+  "total": 65,
+  "passed": 65,
   "failed": 0,
   "results": [
     {
@@ -222,7 +222,7 @@
     },
     {
       "id": "INT-044",
-      "description": "Non-standard epistemic status produces warning",
+      "description": "Non-standard epistemic status triggers HOLD_UNVERIFIED_FACT (fail-closed)",
       "result": "PASS"
     },
     {
@@ -268,6 +268,66 @@
     {
       "id": "INT-053",
       "description": "Defect 6: Evidence with can_use_for_synthetic=true does NOT trigger HOLD_RIGHTS",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-054",
+      "description": "Phase 2.2 D1: can_use_for_synthetic=false ALWAYS triggers HOLD_RIGHTS even with fictional=true",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-055",
+      "description": "Phase 2.2 D1: can_use_for_synthetic=false triggers HOLD_RIGHTS even without fictional flag",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-056",
+      "description": "Phase 2.2 D2: Same source_family replicated evidence does NOT corroborate confirmed claim",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-057",
+      "description": "Phase 2.2 D2: Different source_family replicated evidence DOES corroborate confirmed claim",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-058",
+      "description": "Phase 2.2 D3: Missing N01 timestamps triggers HOLD_STALE_FORECAST (fail-closed)",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-059",
+      "description": "Phase 2.2 D3: Malformed N01 timestamps trigger HOLD_STALE_FORECAST",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-060",
+      "description": "Phase 2.2 D3: Malformed reference_time triggers HOLD_STALE_FORECAST",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-061",
+      "description": "Phase 2.2 D4: request_release=true triggers HOLD_NOT_APPROVED",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-062",
+      "description": "Phase 2.2 D4: request_claude_transfer=true triggers HOLD_NOT_APPROVED",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-063",
+      "description": "Phase 2.2 D4: production_gate stage reports HOLD when transfer requested",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-064",
+      "description": "Phase 2.2 D4: production_gate stage PASS when no transfer/release requested",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-065",
+      "description": "Phase 2.2 Bonus: Unknown epistemic status HOLD is distinct from missing rights HOLD",
       "result": "PASS"
     }
   ],

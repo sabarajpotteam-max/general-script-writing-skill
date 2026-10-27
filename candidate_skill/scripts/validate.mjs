@@ -89,9 +89,9 @@ export function validateInput(input) {
     }
 
     if (item.epistemic_status && !VALID_EPISTEMIC.has(item.epistemic_status)) {
-      warnings.push(`Evidence ${item.id} has non-standard epistemic status: ${item.epistemic_status}`);
+      holds.push({ type: HOLD_TYPES.UNVERIFIED_FACT, detail: `Evidence ${item.id} has unknown epistemic status "${item.epistemic_status}" — must be one of: ${[...VALID_EPISTEMIC].join(", ")}` });
       entry.epistemic_status = "qualified";
-      entry.caveats.push("Epistemic status auto-assigned to 'qualified'");
+      entry.caveats.push("Epistemic status invalid — HOLD raised, defaulted to 'qualified' in register");
     }
 
     if (item.epistemic_status === "confirmed" && evidence.filter(e => e.id === item.id).length < 2) {
@@ -99,20 +99,22 @@ export function validateInput(input) {
       const corroborating = evidence.filter(e => {
         if (e.id === item.id) return false;
         if (e.epistemic_status !== "replicated") return false;
+        if (item.source_family && e.source_family && e.source_family === item.source_family) return false;
         const eClaim = (e.claim || e.source || "").toLowerCase();
         if (item.claim && e.claim) return eClaim === itemClaim;
-        if (item.source_family && e.source_family) return e.source_family !== item.source_family;
         return eClaim === itemClaim;
       });
       if (corroborating.length === 0) {
         holds.push({
           type: HOLD_TYPES.UNVERIFIED_FACT,
-          detail: `Evidence ${item.id} claims 'confirmed' but no corroborating replicated source for the same claim`
+          detail: `Evidence ${item.id} claims 'confirmed' but no corroborating replicated source from an independent source family`
         });
       }
     }
 
-    if (item.can_use_for_synthetic === undefined && !item.fictional) {
+    if (item.can_use_for_synthetic === false) {
+      holds.push({ type: HOLD_TYPES.RIGHTS, detail: `Evidence ${item.id} explicitly denied for synthetic use (can_use_for_synthetic: false)` });
+    } else if (item.can_use_for_synthetic === undefined && !item.fictional) {
       holds.push({ type: HOLD_TYPES.RIGHTS, detail: `Evidence ${item.id} missing rights/license information (can_use_for_synthetic not declared)` });
     }
 
@@ -124,14 +126,23 @@ export function validateInput(input) {
   const ctx = input.niche_context || {};
 
   if (niche === "N01") {
-    if (ctx.issued_at && ctx.valid_until) {
-      const window = Date.parse(ctx.valid_until) - Date.parse(ctx.issued_at);
-      if (window <= 3600000 && !ctx.historical_context) {
-        holds.push({ type: HOLD_TYPES.STALE_FORECAST, detail: "Forecast validity window <= 1 hour without historical context" });
-      }
-      const now = ctx.reference_time ? Date.parse(ctx.reference_time) : Date.now();
-      if (Date.parse(ctx.valid_until) < now && !ctx.historical_context) {
-        holds.push({ type: HOLD_TYPES.STALE_FORECAST, detail: "Forecast has expired (valid_until is in the past)" });
+    if (!ctx.issued_at || !ctx.valid_until) {
+      holds.push({ type: HOLD_TYPES.STALE_FORECAST, detail: "N01 forecast niche requires issued_at and valid_until timestamps" });
+    } else {
+      const issuedMs = Date.parse(ctx.issued_at);
+      const validMs = Date.parse(ctx.valid_until);
+      const refMs = ctx.reference_time ? Date.parse(ctx.reference_time) : null;
+      if (Number.isNaN(issuedMs) || Number.isNaN(validMs) || (ctx.reference_time && Number.isNaN(refMs))) {
+        holds.push({ type: HOLD_TYPES.STALE_FORECAST, detail: "N01 forecast timestamps are malformed (unparseable date)" });
+      } else {
+        const window = validMs - issuedMs;
+        if (window <= 3600000 && !ctx.historical_context) {
+          holds.push({ type: HOLD_TYPES.STALE_FORECAST, detail: "Forecast validity window <= 1 hour without historical context" });
+        }
+        const now = refMs !== null ? refMs : Date.now();
+        if (validMs < now && !ctx.historical_context) {
+          holds.push({ type: HOLD_TYPES.STALE_FORECAST, detail: "Forecast has expired (valid_until is in the past)" });
+        }
       }
     }
   }
@@ -172,6 +183,13 @@ export function validateInput(input) {
     }
   }
 
+  if (input.request_release) {
+    holds.push({ type: HOLD_TYPES.NOT_APPROVED, detail: "request_release is set — candidate output is non-production and cannot be released" });
+  }
+  if (input.request_claude_transfer) {
+    holds.push({ type: HOLD_TYPES.NOT_APPROVED, detail: "request_claude_transfer is set — transfer of candidate material is restricted" });
+  }
+
   const status = holds.length === 0 ? "PASS" : "HOLD";
   return {
     status,
@@ -182,7 +200,8 @@ export function validateInput(input) {
       topic_intake: missing.length === 0 ? "PASS" : "HOLD",
       evidence_validation: holds.filter(h => [HOLD_TYPES.SOURCE_ROLE, HOLD_TYPES.DISPUTED_PROVENANCE, HOLD_TYPES.UNVERIFIED_FACT, HOLD_TYPES.RIGHTS].includes(h.type)).length === 0 ? "PASS" : "HOLD",
       niche_check: holds.filter(h => [HOLD_TYPES.STALE_FORECAST, HOLD_TYPES.HARM, HOLD_TYPES.REVIEW].includes(h.type)).length === 0 ? "PASS" : "HOLD",
-      title_check: holds.filter(h => h.type === HOLD_TYPES.TITLE_PREMISE).length === 0 ? "PASS" : "HOLD"
+      title_check: holds.filter(h => h.type === HOLD_TYPES.TITLE_PREMISE).length === 0 ? "PASS" : "HOLD",
+      production_gate: holds.filter(h => h.type === HOLD_TYPES.NOT_APPROVED).length === 0 ? "PASS" : "HOLD"
     }
   };
 }

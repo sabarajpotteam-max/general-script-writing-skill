@@ -378,13 +378,13 @@ test("INT-043", "Empty evidence list produces HOLD_UNVERIFIED_FACT (Defect 1 reg
   return r.status === "HOLD" && r.holds.some(h => h.type === "HOLD_UNVERIFIED_FACT" && h.detail.includes("No evidence"));
 });
 
-test("INT-044", "Non-standard epistemic status produces warning", () => {
+test("INT-044", "Non-standard epistemic status triggers HOLD_UNVERIFIED_FACT (fail-closed)", () => {
   const input = {
     ...demoInput,
-    evidence: [{ id: "E-TEST", source: "test", epistemic_status: "maybe" }]
+    evidence: [{ id: "E-TEST", source: "test", epistemic_status: "maybe", fictional: true }]
   };
   const r = validateInput(input);
-  return r.warnings.some(w => w.includes("non-standard"));
+  return r.status === "HOLD" && r.holds.some(h => h.type === "HOLD_UNVERIFIED_FACT" && h.detail.includes("unknown epistemic status"));
 });
 
 test("INT-045", "Multiple HOLD types can coexist", () => {
@@ -485,6 +485,121 @@ test("INT-053", "Defect 6: Evidence with can_use_for_synthetic=true does NOT tri
   };
   const r = validateInput(input);
   return !r.holds.some(h => h.type === "HOLD_RIGHTS");
+});
+
+// === HARDENING REGRESSION TESTS (Phase 2.2) ===
+
+test("INT-054", "Phase 2.2 D1: can_use_for_synthetic=false ALWAYS triggers HOLD_RIGHTS even with fictional=true", () => {
+  const input = {
+    ...demoInput,
+    evidence: [{ id: "E-DENIED", source: "Denied source", epistemic_status: "qualified", fictional: true, can_use_for_synthetic: false }]
+  };
+  const r = validateInput(input);
+  return r.holds.some(h => h.type === "HOLD_RIGHTS" && h.detail.includes("explicitly denied"));
+});
+
+test("INT-055", "Phase 2.2 D1: can_use_for_synthetic=false triggers HOLD_RIGHTS even without fictional flag", () => {
+  const input = {
+    ...demoInput,
+    evidence: [{ id: "E-DENIED2", source: "Real denied", epistemic_status: "qualified", can_use_for_synthetic: false }]
+  };
+  const r = validateInput(input);
+  return r.holds.some(h => h.type === "HOLD_RIGHTS" && h.detail.includes("explicitly denied"));
+});
+
+test("INT-056", "Phase 2.2 D2: Same source_family replicated evidence does NOT corroborate confirmed claim", () => {
+  const input = {
+    ...demoInput,
+    evidence: [
+      { id: "E-X", source: "Lab X Report 1", claim: "Drug Z works", source_family: "LabX", epistemic_status: "confirmed", fictional: true },
+      { id: "E-Y", source: "Lab X Report 2", claim: "Drug Z works", source_family: "LabX", epistemic_status: "replicated", fictional: true }
+    ]
+  };
+  const r = validateInput(input);
+  return r.holds.some(h => h.type === "HOLD_UNVERIFIED_FACT" && h.detail.includes("E-X"));
+});
+
+test("INT-057", "Phase 2.2 D2: Different source_family replicated evidence DOES corroborate confirmed claim", () => {
+  const input = {
+    ...demoInput,
+    evidence: [
+      { id: "E-X", source: "Lab X Report", claim: "Drug Z works", source_family: "LabX", epistemic_status: "confirmed", fictional: true },
+      { id: "E-Y", source: "Lab Y Report", claim: "Drug Z works", source_family: "LabY", epistemic_status: "replicated", fictional: true }
+    ]
+  };
+  const r = validateInput(input);
+  return !r.holds.some(h => h.type === "HOLD_UNVERIFIED_FACT" && h.detail.includes("E-X"));
+});
+
+test("INT-058", "Phase 2.2 D3: Missing N01 timestamps triggers HOLD_STALE_FORECAST (fail-closed)", () => {
+  const input = {
+    ...demoInput,
+    niche: "N01",
+    niche_context: {}
+  };
+  const r = validateInput(input);
+  return r.holds.some(h => h.type === "HOLD_STALE_FORECAST" && h.detail.includes("requires"));
+});
+
+test("INT-059", "Phase 2.2 D3: Malformed N01 timestamps trigger HOLD_STALE_FORECAST", () => {
+  const input = {
+    ...demoInput,
+    niche: "N01",
+    niche_context: {
+      issued_at: "not-a-date",
+      valid_until: "also-not-a-date"
+    }
+  };
+  const r = validateInput(input);
+  return r.holds.some(h => h.type === "HOLD_STALE_FORECAST" && h.detail.includes("malformed"));
+});
+
+test("INT-060", "Phase 2.2 D3: Malformed reference_time triggers HOLD_STALE_FORECAST", () => {
+  const input = {
+    ...demoInput,
+    niche: "N01",
+    niche_context: {
+      issued_at: "2035-01-01T06:00:00Z",
+      valid_until: "2035-01-01T12:00:00Z",
+      reference_time: "garbage"
+    }
+  };
+  const r = validateInput(input);
+  return r.holds.some(h => h.type === "HOLD_STALE_FORECAST" && h.detail.includes("malformed"));
+});
+
+test("INT-061", "Phase 2.2 D4: request_release=true triggers HOLD_NOT_APPROVED", () => {
+  const input = { ...demoInput, request_release: true };
+  const r = validateInput(input);
+  return r.holds.some(h => h.type === "HOLD_NOT_APPROVED" && h.detail.includes("request_release"));
+});
+
+test("INT-062", "Phase 2.2 D4: request_claude_transfer=true triggers HOLD_NOT_APPROVED", () => {
+  const input = { ...demoInput, request_claude_transfer: true };
+  const r = validateInput(input);
+  return r.holds.some(h => h.type === "HOLD_NOT_APPROVED" && h.detail.includes("request_claude_transfer"));
+});
+
+test("INT-063", "Phase 2.2 D4: production_gate stage reports HOLD when transfer requested", () => {
+  const input = { ...demoInput, request_release: true };
+  const r = validateInput(input);
+  return r.stages.production_gate === "HOLD";
+});
+
+test("INT-064", "Phase 2.2 D4: production_gate stage PASS when no transfer/release requested", () => {
+  const r = validateInput(demoInput);
+  return r.stages.production_gate === "PASS";
+});
+
+test("INT-065", "Phase 2.2 Bonus: Unknown epistemic status HOLD is distinct from missing rights HOLD", () => {
+  const input = {
+    ...demoInput,
+    evidence: [{ id: "E-UNK", source: "Some study", epistemic_status: "unknown_status", fictional: true }]
+  };
+  const r = validateInput(input);
+  const hasEpistemic = r.holds.some(h => h.type === "HOLD_UNVERIFIED_FACT" && h.detail.includes("unknown epistemic"));
+  const noRights = !r.holds.some(h => h.type === "HOLD_RIGHTS");
+  return hasEpistemic && noRights;
 });
 
 // === Print results ===

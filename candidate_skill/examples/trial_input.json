@@ -1,0 +1,62 @@
+{
+  "title": "The Clockmaker's Broadcast: How One Pirate Radio Operator Defied Censorship in Occupied France",
+  "niche": "N03",
+  "subject": "clandestine radio broadcasting by resistance operatives in occupied France",
+  "object": "civilian morale and Allied intelligence during the 1942-1944 occupation period",
+  "mechanism": "low-power shortwave transmissions from concealed workshops evading German direction-finding patrols",
+  "uncertainty": "is believed to",
+  "target_words": 2800,
+  "evidence": [
+    {
+      "id": "E-101",
+      "description": "Archival study of 23 known clandestine radio operators in occupied France (1942-1944). Average operational lifespan was 4.7 months before detection or relocation. Operators using clockwork timing mechanisms survived 2.3x longer than those on fixed schedules (n=23).",
+      "source": "Renault, M. (2019). 'Shadow Frequencies: Clandestine Radio Operations in Vichy France.' Institut Historique de la Résistance, Cahiers de Recherche, Vol. 14, pp. 88-112.",
+      "source_type": "archival_research",
+      "epistemic_status": "preliminary",
+      "fictional": true,
+      "can_use_for_synthetic": true
+    },
+    {
+      "id": "E-102",
+      "description": "Partial replication of Renault's survival analysis using declassified SOE records. Confirmed the direction-finding evasion advantage of irregular scheduling but found the survival multiplier was 1.8x, not 2.3x (n=41 operators across France and Belgium).",
+      "source": "Blackwood, J. & Okonkwo, T. (2021). 'Wireless War: SOE Radio Tradecraft and Operator Longevity.' Cambridge Military History Review, 9(2), 201-229.",
+      "source_type": "replication_study",
+      "epistemic_status": "replicated",
+      "claim": "irregular scheduling improved clandestine radio operator survival",
+      "source_family": "SOE_records",
+      "fictional": true,
+      "can_use_for_synthetic": true
+    },
+    {
+      "id": "E-103",
+      "description": "Critique arguing survival analysis conflates operator skill with scheduling technique. Experienced operators were more likely to adopt irregular schedules AND more likely to survive for other reasons (training, network quality). After controlling for operator experience, the scheduling effect reduced to non-significance.",
+      "source": "Hoffman, K. (2022). 'Survivorship Bias in Resistance Radio Studies: A Methodological Note.' Journal of Intelligence History (fictional), 21(1), 45-52.",
+      "source_type": "critique",
+      "epistemic_status": "disputed",
+      "fictional": true,
+      "can_use_for_synthetic": true
+    },
+    {
+      "id": "E-104",
+      "description": "Oral history project recording testimonies of 8 surviving resistance radio operators and their families. Documents the psychological toll of constant detection threat and the specific techniques used to conceal equipment in clock repair workshops.",
+      "source": "Delacroix, S. (2020). 'Voices from the Static: Oral Histories of French Resistance Radio Operators.' Mémorial de la Résistance, Oral History Collection OH-2020-07.",
+      "source_type": "oral_history",
+      "epistemic_status": "qualified",
+      "fictional": true,
+      "can_use_for_synthetic": true
+    },
+    {
+      "id": "E-105",
+      "description": "Technical analysis of German direction-finding (D/F) capabilities 1942-1944. Funkabwehr units could locate a transmitter within a 2km radius after 15-20 minutes of continuous transmission. Operators transmitting for under 5 minutes had a detection probability below 12%.",
+      "source": "Weiss, H. & Tanaka, R. (2018). 'The Funkabwehr Network: Technical Capabilities and Limitations of German Radio Direction Finding.' Signals Intelligence Historical Review (fictional), 3(4), 310-338.",
+      "source_type": "technical_analysis",
+      "epistemic_status": "qualified",
+      "fictional": true,
+      "can_use_for_synthetic": true
+    }
+  ],
+  "niche_context": {},
+  "synthetic": true,
+  "all_evidence_fictional": true,
+  "disclaimer": "All institutions, researchers, journals, and findings are entirely fictional. Created for live skill trial."
+}

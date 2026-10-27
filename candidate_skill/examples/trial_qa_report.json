@@ -1,0 +1,54 @@
+{
+  "sections": [
+    {
+      "section": "HOOK: Five Minutes of Static",
+      "words": 277
+    },
+    {
+      "section": "SECTION 1: The Problem — Broadcasting Under Occupation",
+      "words": 374
+    },
+    {
+      "section": "SECTION 2: The Discovery — The Clockwork Advantage",
+      "words": 299
+    },
+    {
+      "section": "SECTION 3: The Mechanism — Evading the Funkabwehr",
+      "words": 360
+    },
+    {
+      "section": "SECTION 4: The Challenge — Survivorship Bias",
+      "words": 305
+    },
+    {
+      "section": "SECTION 5: The Resolution — Converging Evidence",
+      "words": 481
+    },
+    {
+      "section": "SECTION 6: Implications — What the Operators Left Behind",
+      "words": 385
+    },
+    {
+      "section": "OUTRO: The Last Transmission",
+      "words": 239
+    }
+  ],
+  "total_words": 2720,
+  "target_words": 2800,
+  "word_budget_status": "PASS",
+  "evidence_referenced": [
+    "E-101",
+    "E-102",
+    "E-103",
+    "E-104",
+    "E-105"
+  ],
+  "evidence_unreferenced": [],
+  "evidence_traceability": "PASS",
+  "subject_consistency": "PASS",
+  "object_consistency": "PASS",
+  "epistemic_upgrades": [],
+  "epistemic_integrity": "PASS",
+  "input_validation": "PASS",
+  "input_holds": []
+}
