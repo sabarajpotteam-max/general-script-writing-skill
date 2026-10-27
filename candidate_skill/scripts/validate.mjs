@@ -99,7 +99,8 @@ export function validateInput(input) {
       const corroborating = evidence.filter(e => {
         if (e.id === item.id) return false;
         if (e.epistemic_status !== "replicated") return false;
-        if (item.source_family && e.source_family && e.source_family === item.source_family) return false;
+        if (!item.source_family || !e.source_family) return false;
+        if (e.source_family === item.source_family) return false;
         const eClaim = (e.claim || e.source || "").toLowerCase();
         if (item.claim && e.claim) return eClaim === itemClaim;
         return eClaim === itemClaim;
@@ -126,22 +127,21 @@ export function validateInput(input) {
   const ctx = input.niche_context || {};
 
   if (niche === "N01") {
-    if (!ctx.issued_at || !ctx.valid_until) {
-      holds.push({ type: HOLD_TYPES.STALE_FORECAST, detail: "N01 forecast niche requires issued_at and valid_until timestamps" });
+    if (!ctx.issued_at || !ctx.valid_until || !ctx.reference_time) {
+      holds.push({ type: HOLD_TYPES.STALE_FORECAST, detail: "N01 forecast niche requires issued_at, valid_until and reference_time timestamps" });
     } else {
       const issuedMs = Date.parse(ctx.issued_at);
       const validMs = Date.parse(ctx.valid_until);
-      const refMs = ctx.reference_time ? Date.parse(ctx.reference_time) : null;
-      if (Number.isNaN(issuedMs) || Number.isNaN(validMs) || (ctx.reference_time && Number.isNaN(refMs))) {
+      const refMs = Date.parse(ctx.reference_time);
+      if (Number.isNaN(issuedMs) || Number.isNaN(validMs) || Number.isNaN(refMs)) {
         holds.push({ type: HOLD_TYPES.STALE_FORECAST, detail: "N01 forecast timestamps are malformed (unparseable date)" });
       } else {
         const window = validMs - issuedMs;
         if (window <= 3600000 && !ctx.historical_context) {
           holds.push({ type: HOLD_TYPES.STALE_FORECAST, detail: "Forecast validity window <= 1 hour without historical context" });
         }
-        const now = refMs !== null ? refMs : Date.now();
-        if (validMs < now && !ctx.historical_context) {
-          holds.push({ type: HOLD_TYPES.STALE_FORECAST, detail: "Forecast has expired (valid_until is in the past)" });
+        if (validMs < refMs && !ctx.historical_context) {
+          holds.push({ type: HOLD_TYPES.STALE_FORECAST, detail: "Forecast has expired (valid_until is before reference_time)" });
         }
       }
     }

@@ -1,8 +1,8 @@
 {
-  "executed_at": "2026-10-27T22:42:57.556Z",
+  "executed_at": "2026-10-27T22:59:19.211Z",
   "suite": "skill_integration",
-  "total": 65,
-  "passed": 65,
+  "total": 71,
+  "passed": 71,
   "failed": 0,
   "results": [
     {
@@ -328,6 +328,36 @@
     {
       "id": "INT-065",
       "description": "Phase 2.2 Bonus: Unknown epistemic status HOLD is distinct from missing rights HOLD",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-066",
+      "description": "Confirmed claim with missing source_family on confirmed item triggers HOLD (unknown independence)",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-067",
+      "description": "Confirmed claim with missing source_family on replicated item triggers HOLD (unknown independence)",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-068",
+      "description": "Confirmed claim with both source_families missing triggers HOLD (unknown independence)",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-069",
+      "description": "N01 missing reference_time triggers HOLD_STALE_FORECAST (deterministic requirement)",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-070",
+      "description": "N01 with all three valid timestamps and wide window passes",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-071",
+      "description": "N01 expired forecast detected via reference_time, not system clock",
       "result": "PASS"
     }
   ],

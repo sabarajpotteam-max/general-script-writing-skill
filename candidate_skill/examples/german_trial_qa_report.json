@@ -1,0 +1,54 @@
+{
+  "sections": [
+    {
+      "section": "HOOK: Drei Minuten im Keller",
+      "words": 262
+    },
+    {
+      "section": "SECTION 1: Das Problem — Kommunikation im Kessel",
+      "words": 317
+    },
+    {
+      "section": "SECTION 2: Die Entdeckung — Der Positionswechsel-Vorteil",
+      "words": 297
+    },
+    {
+      "section": "SECTION 3: Der Mechanismus — Funken unter Beschuss",
+      "words": 337
+    },
+    {
+      "section": "SECTION 4: Die Herausforderung — Überlebensverzerrung",
+      "words": 309
+    },
+    {
+      "section": "SECTION 5: Die Auflösung — Konvergierende Belege",
+      "words": 414
+    },
+    {
+      "section": "SECTION 6: Folgerungen — Was die Funker hinterließen",
+      "words": 361
+    },
+    {
+      "section": "OUTRO: Die letzte Sendung",
+      "words": 227
+    }
+  ],
+  "total_words": 2524,
+  "target_words": 2800,
+  "word_budget_status": "PASS",
+  "evidence_referenced": [
+    "E-201",
+    "E-202",
+    "E-203",
+    "E-204",
+    "E-205"
+  ],
+  "evidence_unreferenced": [],
+  "evidence_traceability": "PASS",
+  "subject_consistency": "PASS",
+  "object_consistency": "PASS",
+  "epistemic_upgrades": [],
+  "epistemic_integrity": "PASS",
+  "input_validation": "PASS",
+  "input_holds": []
+}

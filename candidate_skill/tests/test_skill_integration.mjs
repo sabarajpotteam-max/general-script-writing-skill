@@ -169,6 +169,7 @@ test("INT-016", "N01 historical forecast does not trigger HOLD_STALE_FORECAST", 
     niche_context: {
       issued_at: "2035-01-01T09:00:00Z",
       valid_until: "2035-01-01T09:30:00Z",
+      reference_time: "2035-01-01T12:00:00Z",
       historical_context: true
     }
   };
@@ -340,6 +341,7 @@ test("INT-038", "N01 with valid historical context passes", () => {
     niche_context: {
       issued_at: "2020-01-01T09:00:00Z",
       valid_until: "2020-01-01T09:30:00Z",
+      reference_time: "2020-01-01T12:00:00Z",
       historical_context: true
     }
   };
@@ -432,8 +434,8 @@ test("INT-048", "Defect 3: Related replicated evidence DOES corroborate a confir
   const input = {
     ...demoInput,
     evidence: [
-      { id: "E-A", source: "Study A", claim: "Spindle density affects memory", epistemic_status: "confirmed", fictional: true },
-      { id: "E-B", source: "Study B", claim: "Spindle density affects memory", epistemic_status: "replicated", fictional: true }
+      { id: "E-A", source: "Study A", claim: "Spindle density affects memory", source_family: "LabA", epistemic_status: "confirmed", fictional: true },
+      { id: "E-B", source: "Study B", claim: "Spindle density affects memory", source_family: "LabB", epistemic_status: "replicated", fictional: true }
     ]
   };
   const r = validateInput(input);
@@ -547,7 +549,8 @@ test("INT-059", "Phase 2.2 D3: Malformed N01 timestamps trigger HOLD_STALE_FOREC
     niche: "N01",
     niche_context: {
       issued_at: "not-a-date",
-      valid_until: "also-not-a-date"
+      valid_until: "also-not-a-date",
+      reference_time: "still-not-a-date"
     }
   };
   const r = validateInput(input);
@@ -600,6 +603,85 @@ test("INT-065", "Phase 2.2 Bonus: Unknown epistemic status HOLD is distinct from
   const hasEpistemic = r.holds.some(h => h.type === "HOLD_UNVERIFIED_FACT" && h.detail.includes("unknown epistemic"));
   const noRights = !r.holds.some(h => h.type === "HOLD_RIGHTS");
   return hasEpistemic && noRights;
+});
+
+// === FINAL ACCEPTANCE REGRESSION TESTS ===
+
+test("INT-066", "Confirmed claim with missing source_family on confirmed item triggers HOLD (unknown independence)", () => {
+  const input = {
+    ...demoInput,
+    evidence: [
+      { id: "E-C1", source: "Study C1", claim: "Effect X exists", epistemic_status: "confirmed", fictional: true },
+      { id: "E-C2", source: "Study C2", claim: "Effect X exists", source_family: "LabC2", epistemic_status: "replicated", fictional: true }
+    ]
+  };
+  const r = validateInput(input);
+  return r.holds.some(h => h.type === "HOLD_UNVERIFIED_FACT" && h.detail.includes("E-C1"));
+});
+
+test("INT-067", "Confirmed claim with missing source_family on replicated item triggers HOLD (unknown independence)", () => {
+  const input = {
+    ...demoInput,
+    evidence: [
+      { id: "E-D1", source: "Study D1", claim: "Effect Y exists", source_family: "LabD1", epistemic_status: "confirmed", fictional: true },
+      { id: "E-D2", source: "Study D2", claim: "Effect Y exists", epistemic_status: "replicated", fictional: true }
+    ]
+  };
+  const r = validateInput(input);
+  return r.holds.some(h => h.type === "HOLD_UNVERIFIED_FACT" && h.detail.includes("E-D1"));
+});
+
+test("INT-068", "Confirmed claim with both source_families missing triggers HOLD (unknown independence)", () => {
+  const input = {
+    ...demoInput,
+    evidence: [
+      { id: "E-F1", source: "Study F1", claim: "Effect Z exists", epistemic_status: "confirmed", fictional: true },
+      { id: "E-F2", source: "Study F2", claim: "Effect Z exists", epistemic_status: "replicated", fictional: true }
+    ]
+  };
+  const r = validateInput(input);
+  return r.holds.some(h => h.type === "HOLD_UNVERIFIED_FACT" && h.detail.includes("E-F1"));
+});
+
+test("INT-069", "N01 missing reference_time triggers HOLD_STALE_FORECAST (deterministic requirement)", () => {
+  const input = {
+    ...demoInput,
+    niche: "N01",
+    niche_context: {
+      issued_at: "2035-06-01T06:00:00Z",
+      valid_until: "2035-06-01T18:00:00Z"
+    }
+  };
+  const r = validateInput(input);
+  return r.holds.some(h => h.type === "HOLD_STALE_FORECAST" && h.detail.includes("reference_time"));
+});
+
+test("INT-070", "N01 with all three valid timestamps and wide window passes", () => {
+  const input = {
+    ...demoInput,
+    niche: "N01",
+    niche_context: {
+      issued_at: "2035-06-01T06:00:00Z",
+      valid_until: "2035-06-01T18:00:00Z",
+      reference_time: "2035-06-01T10:00:00Z"
+    }
+  };
+  const r = validateInput(input);
+  return !r.holds.some(h => h.type === "HOLD_STALE_FORECAST");
+});
+
+test("INT-071", "N01 expired forecast detected via reference_time, not system clock", () => {
+  const input = {
+    ...demoInput,
+    niche: "N01",
+    niche_context: {
+      issued_at: "2035-06-01T06:00:00Z",
+      valid_until: "2035-06-01T12:00:00Z",
+      reference_time: "2035-06-01T18:00:00Z"
+    }
+  };
+  const r = validateInput(input);
+  return r.holds.some(h => h.type === "HOLD_STALE_FORECAST" && h.detail.includes("expired"));
 });
 
 // === Print results ===

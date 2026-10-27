@@ -1,0 +1,63 @@
+{
+  "title": "Der Funker von Stalingrad: Wie ein Soldat mit einem Feldradio die Wahrheit übermittelte",
+  "niche": "N03",
+  "subject": "Feldfunker im Kessel von Stalingrad und deren heimliche Nachrichtenübermittlung",
+  "object": "die Auswirkungen auf Moral und Informationsfluss eingekesselter Truppen im Winter 1942-1943",
+  "mechanism": "getarnte Kurzwellenübertragungen aus improvisierten Positionen innerhalb des Kessels",
+  "uncertainty": "wird angenommen",
+  "target_words": 2800,
+  "evidence": [
+    {
+      "id": "E-201",
+      "description": "Archivanalyse von 15 erhaltenen Funkprotokollen der 6. Armee, Dezember 1942 bis Januar 1943. Durchschnittliche Sendedauer betrug 3,2 Minuten. Funker, die ihre Positionen regelmäßig wechselten, blieben im Durchschnitt 2,1-mal länger aktiv.",
+      "source": "Brandt, H. (2020). 'Stimmen aus dem Kessel: Funkverkehr der 6. Armee.' Militärgeschichtliches Forschungsamt (fiktiv), Bd. 47, S. 112-138.",
+      "source_type": "archival_research",
+      "epistemic_status": "preliminary",
+      "source_family": "MilitaerarchivDE",
+      "fictional": true,
+      "can_use_for_synthetic": true
+    },
+    {
+      "id": "E-202",
+      "description": "Teilreplikation mit sowjetischen Abhörprotokollen: Bestätigung von 9 der 15 identifizierten Sendungen. Überlebenseffekt durch Positionswechsel bei 1,7-fach (kleiner als Brandts 2,1).",
+      "source": "Kusnezow, A. & Weber, L. (2022). 'Gegenüberstellung deutscher und sowjetischer Funkaufzeichnungen bei Stalingrad.' Osteuropäische Militärstudien (fiktiv), 8(3), S. 67-89.",
+      "source_type": "replication_study",
+      "epistemic_status": "replicated",
+      "claim": "heimliche Nachrichtenübermittlung durch Feldfunker im Kessel von Stalingrad",
+      "source_family": "SowjetArchivRU",
+      "fictional": true,
+      "can_use_for_synthetic": true
+    },
+    {
+      "id": "E-203",
+      "description": "Methodenkritik: Erhaltungsverzerrung — nur Protokolle überlebender Einheiten verfügbar. Geschätzt 60-70 % der Funkaktivität undokumentiert.",
+      "source": "Fischer, K. (2023). 'Überlebensverzerrung in Stalingrad-Funkstudien.' Zeitschrift für Militärgeschichte (fiktiv), 31(1), S. 22-30.",
+      "source_type": "critique",
+      "epistemic_status": "disputed",
+      "fictional": true,
+      "can_use_for_synthetic": true
+    },
+    {
+      "id": "E-204",
+      "description": "Interviews mit drei überlebenden Funkhelfern und deren Familien. Dokumentiert psychologische Belastung und improvisierte Ausrüstungsreparatur unter extremen Winterbedingungen.",
+      "source": "Meier, S. (2021). 'Die letzten Funker: Zeitzeugenberichte aus dem Kessel.' Stiftung Erinnerung (fiktiv), Oral-History-Sammlung OH-2021-14.",
+      "source_type": "oral_history",
+      "epistemic_status": "qualified",
+      "fictional": true,
+      "can_use_for_synthetic": true
+    },
+    {
+      "id": "E-205",
+      "description": "Technische Analyse der Feldkommunikationsausrüstung Torn.Fu.d2 und ihrer Begrenzungen unter Winterbedingungen bei -30°C. Batteriekapazität sank auf 40 % des Nennwerts.",
+      "source": "Schuster, W. & Tanaka, R. (2019). 'Technische Grenzen der Feldkommunikation: Wehrmacht-Funkgeräte im russischen Winter.' Technikgeschichtliche Rundschau (fiktiv), 5(2), S. 190-215.",
+      "source_type": "technical_analysis",
+      "epistemic_status": "qualified",
+      "fictional": true,
+      "can_use_for_synthetic": true
+    }
+  ],
+  "niche_context": {},
+  "synthetic": true,
+  "all_evidence_fictional": true,
+  "disclaimer": "Alle Institutionen, Forscher, Zeitschriften und Ergebnisse sind frei erfunden. Erstellt für die Kandidatenakzeptanz-Demonstration."
+}
