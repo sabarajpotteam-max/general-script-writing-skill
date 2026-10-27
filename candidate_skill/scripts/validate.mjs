@@ -57,7 +57,7 @@ export function validateInput(input) {
   // Stage 2: Evidence Validation
   const evidence = input.evidence || [];
   if (evidence.length === 0) {
-    warnings.push("No evidence items provided");
+    holds.push({ type: HOLD_TYPES.UNVERIFIED_FACT, detail: "No evidence items provided — factual documentary requires at least one evidence source" });
   }
 
   for (const item of evidence) {
@@ -95,15 +95,25 @@ export function validateInput(input) {
     }
 
     if (item.epistemic_status === "confirmed" && evidence.filter(e => e.id === item.id).length < 2) {
-      const corroborating = evidence.filter(e =>
-        e.id !== item.id && e.epistemic_status === "replicated"
-      );
+      const itemClaim = (item.claim || item.source || "").toLowerCase();
+      const corroborating = evidence.filter(e => {
+        if (e.id === item.id) return false;
+        if (e.epistemic_status !== "replicated") return false;
+        const eClaim = (e.claim || e.source || "").toLowerCase();
+        if (item.claim && e.claim) return eClaim === itemClaim;
+        if (item.source_family && e.source_family) return e.source_family !== item.source_family;
+        return eClaim === itemClaim;
+      });
       if (corroborating.length === 0) {
         holds.push({
           type: HOLD_TYPES.UNVERIFIED_FACT,
-          detail: `Evidence ${item.id} claims 'confirmed' but no corroborating replicated source`
+          detail: `Evidence ${item.id} claims 'confirmed' but no corroborating replicated source for the same claim`
         });
       }
+    }
+
+    if (item.can_use_for_synthetic === undefined && !item.fictional) {
+      holds.push({ type: HOLD_TYPES.RIGHTS, detail: `Evidence ${item.id} missing rights/license information (can_use_for_synthetic not declared)` });
     }
 
     evidence_register.push(entry);
@@ -119,6 +129,19 @@ export function validateInput(input) {
       if (window <= 3600000 && !ctx.historical_context) {
         holds.push({ type: HOLD_TYPES.STALE_FORECAST, detail: "Forecast validity window <= 1 hour without historical context" });
       }
+      const now = ctx.reference_time ? Date.parse(ctx.reference_time) : Date.now();
+      if (Date.parse(ctx.valid_until) < now && !ctx.historical_context) {
+        holds.push({ type: HOLD_TYPES.STALE_FORECAST, detail: "Forecast has expired (valid_until is in the past)" });
+      }
+    }
+  }
+
+  if (niche === "N02") {
+    if (ctx.technology_stage === "prototype" && ctx.claimed_operational) {
+      holds.push({ type: HOLD_TYPES.HARM, detail: "Military technology marked operational while still a prototype" });
+    }
+    if (ctx.classification_level && ctx.classification_level !== "unclassified" && !ctx.declassification_confirmed) {
+      holds.push({ type: HOLD_TYPES.REVIEW, detail: `Military content classification level "${ctx.classification_level}" requires declassification confirmation` });
     }
   }
 
@@ -131,6 +154,9 @@ export function validateInput(input) {
   if (niche === "N04") {
     if (ctx.synthetic_video_claimed_authentic) {
       holds.push({ type: HOLD_TYPES.HARM, detail: "Synthetic video claimed as authentic" });
+    }
+    if (ctx.provisional_casualties_called_final) {
+      holds.push({ type: HOLD_TYPES.HARM, detail: "Provisional disaster casualty figures presented as final" });
     }
   }
 
@@ -154,8 +180,8 @@ export function validateInput(input) {
     evidence_register,
     stages: {
       topic_intake: missing.length === 0 ? "PASS" : "HOLD",
-      evidence_validation: holds.filter(h => [HOLD_TYPES.SOURCE_ROLE, HOLD_TYPES.DISPUTED_PROVENANCE, HOLD_TYPES.UNVERIFIED_FACT].includes(h.type)).length === 0 ? "PASS" : "HOLD",
-      niche_check: holds.filter(h => [HOLD_TYPES.STALE_FORECAST, HOLD_TYPES.HARM].includes(h.type)).length === 0 ? "PASS" : "HOLD",
+      evidence_validation: holds.filter(h => [HOLD_TYPES.SOURCE_ROLE, HOLD_TYPES.DISPUTED_PROVENANCE, HOLD_TYPES.UNVERIFIED_FACT, HOLD_TYPES.RIGHTS].includes(h.type)).length === 0 ? "PASS" : "HOLD",
+      niche_check: holds.filter(h => [HOLD_TYPES.STALE_FORECAST, HOLD_TYPES.HARM, HOLD_TYPES.REVIEW].includes(h.type)).length === 0 ? "PASS" : "HOLD",
       title_check: holds.filter(h => h.type === HOLD_TYPES.TITLE_PREMISE).length === 0 ? "PASS" : "HOLD"
     }
   };
@@ -267,9 +293,18 @@ if (process.argv[1] && process.argv[1].endsWith("validate.mjs")) {
     }
     const scriptText = readFileSync(scriptPath, "utf-8");
     const input = JSON.parse(readFileSync(inputPath, "utf-8"));
+    const validation = validateInput(input);
     const result = analyzeScript(scriptText, input);
+    result.input_validation = validation.status;
+    result.input_holds = validation.holds;
     console.log(JSON.stringify(result, null, 2));
-    process.exit(result.epistemic_integrity === "PASS" ? 0 : 2);
+    const allPass = result.epistemic_integrity === "PASS" &&
+      result.word_budget_status === "PASS" &&
+      result.evidence_traceability === "PASS" &&
+      result.subject_consistency === "PASS" &&
+      result.object_consistency === "PASS" &&
+      validation.status === "PASS";
+    process.exit(allPass ? 0 : 2);
   } else {
     const inputPath = mode || process.argv[2];
     if (!inputPath) {

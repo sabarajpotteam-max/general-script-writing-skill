@@ -39,12 +39,32 @@ function countWords(t) {
   return t.split(/\s+/).filter(w => w.length > 0).length;
 }
 
-let total = 0;
-console.log("Section Word Counts:");
+const isNonNarration = (name) =>
+  name.toLowerCase().includes("evidence register") ||
+  name.toLowerCase().includes("qa report");
+
+let narrationTotal = 0;
+let nonNarrationTotal = 0;
+
+console.log("Narration Word Counts:");
 console.log("─".repeat(60));
-for (const s of sections) {
+for (const s of sections.filter(s => !isNonNarration(s.name))) {
   console.log(`  ${s.name.padEnd(45)} ${String(s.words).padStart(6)}`);
-  total += s.words;
+  narrationTotal += s.words;
 }
 console.log("─".repeat(60));
-console.log(`  ${"TOTAL".padEnd(45)} ${String(total).padStart(6)}`);
+console.log(`  ${"NARRATION TOTAL".padEnd(45)} ${String(narrationTotal).padStart(6)}`);
+
+const nonNarr = sections.filter(s => isNonNarration(s.name));
+if (nonNarr.length > 0) {
+  console.log(`\nNon-Narration Sections (excluded from word budget):`);
+  console.log("─".repeat(60));
+  for (const s of nonNarr) {
+    console.log(`  ${s.name.padEnd(45)} ${String(s.words).padStart(6)}`);
+    nonNarrationTotal += s.words;
+  }
+  console.log("─".repeat(60));
+  console.log(`  ${"NON-NARRATION TOTAL".padEnd(45)} ${String(nonNarrationTotal).padStart(6)}`);
+}
+
+console.log(`\n  ${"GRAND TOTAL (all sections)".padEnd(45)} ${String(narrationTotal + nonNarrationTotal).padStart(6)}`);

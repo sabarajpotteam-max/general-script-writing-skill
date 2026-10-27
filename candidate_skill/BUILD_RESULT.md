@@ -10,11 +10,27 @@
 - **37/37 PASS** — All QA cases including baseline
 - Receipt: `prototype/offline_synthetic_v01/TEST_EXECUTION_RECEIPT.json`
 
-### Skill Integration Tests (Phase 2)
-- **45/45 PASS** — Input validation, evidence tracing, niche adapters, word counting, HOLD conditions, script QA
+### Skill Integration Tests (Phase 2 + 2.1)
+- **53/53 PASS** — Original 45 + 8 defect regression tests (INT-046 through INT-053)
 - Receipt: `candidate_skill/tests/INTEGRATION_TEST_RECEIPT.json`
 
-### Combined: **82/82 PASS**
+### Combined: **90/90 PASS**
+
+## Phase 2.1 — Independent QA Defect Fixes
+
+Six defects identified by independent ChatGPT inspection, all fixed:
+
+1. **Defect 1 (FIXED):** Empty evidence now produces HOLD_UNVERIFIED_FACT (was: warning only)
+2. **Defect 2 (FIXED):** Expired forecast (past valid_until) now triggers HOLD_STALE_FORECAST regardless of window length
+3. **Defect 3 (FIXED):** Corroboration now linked to actual claim — unrelated replicated evidence cannot corroborate a different confirmed claim
+4. **Defect 4 (FIXED):** N02 military checks added — prototype technology claimed operational triggers HOLD_HARM
+5. **Defect 5 (FIXED):** N04 provisional casualties check added — provisional figures presented as final triggers HOLD_HARM
+6. **Defect 6 (FIXED):** Non-fictional evidence missing `can_use_for_synthetic` now triggers HOLD_RIGHTS
+
+**Additional fixes:**
+- QA exit codes now check ALL dimensions (word budget, evidence traceability, consistency, epistemic integrity, input validation) — not just epistemic_integrity
+- Word count utility now separates narration body from QA tables and evidence registers
+- QA report now includes input_validation status and input_holds
 
 ## Demo Script
 

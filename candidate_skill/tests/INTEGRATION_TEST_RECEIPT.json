@@ -1,8 +1,8 @@
 {
-  "executed_at": "2026-10-27T22:11:21.702Z",
+  "executed_at": "2026-10-27T22:28:44.816Z",
   "suite": "skill_integration",
-  "total": 45,
-  "passed": 45,
+  "total": 53,
+  "passed": 53,
   "failed": 0,
   "results": [
     {
@@ -217,7 +217,7 @@
     },
     {
       "id": "INT-043",
-      "description": "Empty evidence list produces warning but not HOLD",
+      "description": "Empty evidence list produces HOLD_UNVERIFIED_FACT (Defect 1 regression)",
       "result": "PASS"
     },
     {
@@ -228,6 +228,46 @@
     {
       "id": "INT-045",
       "description": "Multiple HOLD types can coexist",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-046",
+      "description": "Defect 2: Expired 6-hour forecast triggers HOLD_STALE_FORECAST",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-047",
+      "description": "Defect 3: Unrelated replicated evidence does not corroborate a different confirmed claim",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-048",
+      "description": "Defect 3: Related replicated evidence DOES corroborate a confirmed claim",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-049",
+      "description": "Defect 4: N02 prototype claimed operational triggers HOLD_HARM",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-050",
+      "description": "Defect 5: N04 provisional casualties called final triggers HOLD_HARM",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-051",
+      "description": "Defect 6: Non-fictional evidence missing rights info triggers HOLD_RIGHTS",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-052",
+      "description": "Defect 6: Fictional evidence missing rights info does NOT trigger HOLD_RIGHTS",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-053",
+      "description": "Defect 6: Evidence with can_use_for_synthetic=true does NOT trigger HOLD_RIGHTS",
       "result": "PASS"
     }
   ],

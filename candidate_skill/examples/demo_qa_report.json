@@ -50,5 +50,7 @@
   "subject_consistency": "PASS",
   "object_consistency": "PASS",
   "epistemic_upgrades": [],
-  "epistemic_integrity": "PASS"
+  "epistemic_integrity": "PASS",
+  "input_validation": "PASS",
+  "input_holds": []
 }

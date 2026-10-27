@@ -372,10 +372,10 @@ test("INT-042", "Script has multiple sections with word budgets", () => {
 
 // === COMPREHENSIVE INPUT TESTS ===
 
-test("INT-043", "Empty evidence list produces warning but not HOLD", () => {
+test("INT-043", "Empty evidence list produces HOLD_UNVERIFIED_FACT (Defect 1 regression)", () => {
   const input = { ...demoInput, evidence: [] };
   const r = validateInput(input);
-  return r.warnings.some(w => w.includes("No evidence")) && r.status === "PASS";
+  return r.status === "HOLD" && r.holds.some(h => h.type === "HOLD_UNVERIFIED_FACT" && h.detail.includes("No evidence"));
 });
 
 test("INT-044", "Non-standard epistemic status produces warning", () => {
@@ -398,6 +398,93 @@ test("INT-045", "Multiple HOLD types can coexist", () => {
   const r = validateInput(input);
   const holdTypes = new Set(r.holds.map(h => h.type));
   return holdTypes.has("HOLD_MISSING_IDENTITY") && holdTypes.has("HOLD_HARM") && holdTypes.has("HOLD_SOURCE_ROLE");
+});
+
+// === DEFECT REGRESSION TESTS (Phase 2.1) ===
+
+test("INT-046", "Defect 2: Expired 6-hour forecast triggers HOLD_STALE_FORECAST", () => {
+  const input = {
+    ...demoInput,
+    niche: "N01",
+    niche_context: {
+      issued_at: "2020-01-01T06:00:00Z",
+      valid_until: "2020-01-01T12:00:00Z",
+      reference_time: "2020-01-01T18:00:00Z"
+    }
+  };
+  const r = validateInput(input);
+  return r.holds.some(h => h.type === "HOLD_STALE_FORECAST" && h.detail.includes("expired"));
+});
+
+test("INT-047", "Defect 3: Unrelated replicated evidence does not corroborate a different confirmed claim", () => {
+  const input = {
+    ...demoInput,
+    evidence: [
+      { id: "E-A", source: "Study A", claim: "Claim Alpha", epistemic_status: "confirmed", fictional: true },
+      { id: "E-B", source: "Study B", claim: "Claim Beta", epistemic_status: "replicated", fictional: true }
+    ]
+  };
+  const r = validateInput(input);
+  return r.holds.some(h => h.type === "HOLD_UNVERIFIED_FACT" && h.detail.includes("E-A"));
+});
+
+test("INT-048", "Defect 3: Related replicated evidence DOES corroborate a confirmed claim", () => {
+  const input = {
+    ...demoInput,
+    evidence: [
+      { id: "E-A", source: "Study A", claim: "Spindle density affects memory", epistemic_status: "confirmed", fictional: true },
+      { id: "E-B", source: "Study B", claim: "Spindle density affects memory", epistemic_status: "replicated", fictional: true }
+    ]
+  };
+  const r = validateInput(input);
+  return !r.holds.some(h => h.type === "HOLD_UNVERIFIED_FACT" && h.detail.includes("E-A"));
+});
+
+test("INT-049", "Defect 4: N02 prototype claimed operational triggers HOLD_HARM", () => {
+  const input = {
+    ...demoInput,
+    niche: "N02",
+    niche_context: { technology_stage: "prototype", claimed_operational: true }
+  };
+  const r = validateInput(input);
+  return r.holds.some(h => h.type === "HOLD_HARM" && h.detail.includes("prototype"));
+});
+
+test("INT-050", "Defect 5: N04 provisional casualties called final triggers HOLD_HARM", () => {
+  const input = {
+    ...demoInput,
+    niche: "N04",
+    niche_context: { provisional_casualties_called_final: true }
+  };
+  const r = validateInput(input);
+  return r.holds.some(h => h.type === "HOLD_HARM" && h.detail.toLowerCase().includes("provisional") && h.detail.toLowerCase().includes("casualty"));
+});
+
+test("INT-051", "Defect 6: Non-fictional evidence missing rights info triggers HOLD_RIGHTS", () => {
+  const input = {
+    ...demoInput,
+    evidence: [{ id: "E-REAL", source: "Real study", epistemic_status: "qualified" }]
+  };
+  const r = validateInput(input);
+  return r.holds.some(h => h.type === "HOLD_RIGHTS" && h.detail.includes("rights"));
+});
+
+test("INT-052", "Defect 6: Fictional evidence missing rights info does NOT trigger HOLD_RIGHTS", () => {
+  const input = {
+    ...demoInput,
+    evidence: [{ id: "E-FIC", source: "Fictional study", epistemic_status: "qualified", fictional: true }]
+  };
+  const r = validateInput(input);
+  return !r.holds.some(h => h.type === "HOLD_RIGHTS");
+});
+
+test("INT-053", "Defect 6: Evidence with can_use_for_synthetic=true does NOT trigger HOLD_RIGHTS", () => {
+  const input = {
+    ...demoInput,
+    evidence: [{ id: "E-OK", source: "Licensed study", epistemic_status: "qualified", can_use_for_synthetic: true }]
+  };
+  const r = validateInput(input);
+  return !r.holds.some(h => h.type === "HOLD_RIGHTS");
 });
 
 // === Print results ===
