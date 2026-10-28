@@ -115,27 +115,49 @@ For each evidence item in the input:
 
 ### Stage 3: Narrative Blueprint and Section-Level Word Budgets
 
-**Purpose:** Plan the script structure before writing a single line.
+**Purpose:** Plan the script structure before writing a single line, using the format selected in Stage 1.
 
-1. Create sections based on the standard documentary arc:
+1. **Resolve the format arc.** Use the format resolved during input validation (default: documentary). The format registry provides the arc template with section names and budget percentages. Apply the resolved arc — do not hardcode a single format's sections.
 
-| Section | Purpose | Budget % |
-|---------|---------|----------|
-| Hook | Draw the viewer in with a vivid scene or question | 8–12% |
-| The Problem | Establish why this topic matters | 12–15% |
-| The Discovery | Present the core finding or narrative turn | 16–20% |
-| The Mechanism | Explain how/why it works | 12–15% |
-| The Challenge | Present skepticism, counter-evidence, or complications | 12–15% |
-| The Resolution | Show how the tension resolves (or doesn't) | 14–18% |
-| Implications | What this means going forward | 8–12% |
-| Outro | Return to the opening, close the loop | 5–8% |
+   **Documentary** (Investigation Arc — 8 sections):
 
-2. Calculate word budgets from the target word count. Example for 3000 words:
+   | Section | Purpose | Budget % |
+   |---------|---------|----------|
+   | Hook | Draw the viewer in with a vivid scene or question | 8–12% |
+   | Problem | Establish why this topic matters | 12–15% |
+   | Discovery | Present the core finding or narrative turn | 16–20% |
+   | Mechanism | Explain how/why it works | 12–15% |
+   | Challenge | Present skepticism, counter-evidence, or complications | 12–15% |
+   | Resolution | Show how the tension resolves (or doesn't) | 14–18% |
+   | Implications | What this means going forward | 8–12% |
+   | Outro | Return to the opening, close the loop | 5–8% |
+
+   **Explainer** (Concept Progression Arc — 7 sections):
+
+   | Section | Purpose | Budget % |
+   |---------|---------|----------|
+   | Hook | Open with a relatable question or surprising fact | 10–15% |
+   | Foundation | Establish the base concept the audience needs | 15–20% |
+   | Build | Layer complexity onto the foundation | 20–25% |
+   | Example | Concrete illustration of the concept | 15–20% |
+   | Nuance | Address edge cases, caveats, or counter-intuitive aspects | 10–15% |
+   | Synthesis | Tie everything together into a coherent understanding | 10–15% |
+   | Next Steps | What the audience can do with this knowledge | 5–10% |
+
+   **Short-form** (Hook-Body-CTA Arc — 3 sections):
+
+   | Section | Purpose | Budget % |
+   |---------|---------|----------|
+   | Hook | Capture attention within first 15 words | 15–25% |
+   | Body | Deliver the core message | 50–65% |
+   | CTA | Call to action or closing thought | 15–25% |
+
+2. Calculate word budgets from the target word count using the resolved arc's percentages. Example for documentary at 3000 words:
    - Hook: 240–360, Problem: 360–450, Discovery: 480–600, Mechanism: 360–450, Challenge: 360–450, Resolution: 420–540, Implications: 240–360, Outro: 150–240.
 
-3. **Map evidence to sections.** Each section must list which evidence items [E-XXX] it will reference. Every evidence item must appear in at least one section. An unused evidence item triggers a review note (not a HOLD).
+3. **Map evidence to sections.** Each section must list which evidence items [E-XXX] it will reference. Every evidence item must appear in at least one section. An unused evidence item triggers a review note (not a HOLD). For formats with `evidence_requirement: optional` or `contextual`, evidence mapping is recommended but not mandatory.
 
-4. **Identify open loops.** Plan at least one open loop: a question, mystery, or tension raised early that pays off in a later section. Record the setup section and payoff section.
+4. **Identify open loops.** Plan at least one open loop: a question, mystery, or tension raised early that pays off in a later section. Record the setup section and payoff section. For short-form scripts, a single hook-payoff pair is sufficient.
 
 **HOLD conditions:** None at this stage (blueprint is advisory).
 

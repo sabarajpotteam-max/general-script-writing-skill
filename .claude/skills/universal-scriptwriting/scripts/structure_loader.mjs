@@ -58,13 +58,17 @@ function loadStructure(brief) {
 function estimateWordsFromDuration(durationStr, format) {
   if (!durationStr) return formatDefaultWords(format);
   const str = String(durationStr).toLowerCase().trim();
+  if (str.length === 0) return formatDefaultWords(format);
 
   let minutes = 0;
   const minMatch = str.match(/^(\d+(?:\.\d+)?)\s*min/);
   const secMatch = str.match(/^(\d+(?:\.\d+)?)\s*s(?:ec)?/);
   const wordMatch = str.match(/^(\d+)\s*word/);
 
-  if (wordMatch) return parseInt(wordMatch[1], 10);
+  if (wordMatch) {
+    const w = parseInt(wordMatch[1], 10);
+    return w > 0 ? w : formatDefaultWords(format);
+  }
   if (minMatch) minutes = parseFloat(minMatch[1]);
   else if (secMatch) minutes = parseFloat(secMatch[1]) / 60;
   else {
@@ -72,6 +76,8 @@ function estimateWordsFromDuration(durationStr, format) {
     if (!isNaN(numOnly)) minutes = numOnly;
     else return formatDefaultWords(format);
   }
+
+  if (!Number.isFinite(minutes) || minutes <= 0) return formatDefaultWords(format);
 
   const wordsPerMinute = 150;
   return Math.round(minutes * wordsPerMinute);

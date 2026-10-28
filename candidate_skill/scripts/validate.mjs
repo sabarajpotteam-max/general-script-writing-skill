@@ -1,6 +1,7 @@
 /**
  * Input Validator and QA Report Generator
  * Validates topic JSON against SKILL.md requirements.
+ * Status: RESEARCH_ONLY — not approved for production
  * Node.js ESM, no dependencies.
  *
  * Usage:
@@ -75,8 +76,17 @@ export function validateInput(input) {
   }
   const resolvedFormat = formatResult.resolved;
 
+  // Correction 6: Validate target_words when present
+  if (input.target_words !== undefined && input.target_words !== null) {
+    const tw = input.target_words;
+    if (typeof tw !== 'number' || !Number.isFinite(tw) || tw !== Math.floor(tw) || tw <= 0) {
+      holds.push({ type: HOLD_TYPES.MISSING_IDENTITY, detail: `target_words must be a positive integer, got: ${JSON.stringify(tw)}` });
+    }
+  }
+
   // Word target: use format-specific range when available
-  const target = input.target_words || 3000;
+  const target = (typeof input.target_words === 'number' && Number.isFinite(input.target_words) && input.target_words > 0)
+    ? input.target_words : 3000;
   const fmtRange = resolvedFormat ? resolvedFormat.word_range : null;
   if (fmtRange && (target < fmtRange.min || target > fmtRange.max)) {
     warnings.push(`Target word count ${target} outside ${resolvedFormat.id} range ${fmtRange.min}-${fmtRange.max}`);
@@ -275,8 +285,13 @@ export function analyzeScript(scriptText, input, options = {}) {
   let currentSection = null;
   let currentContent = [];
 
-  // Section heading patterns: ## or ### level, English and German names
-  const scriptHeadingRe = /^#{2,3}\s+(?:HOOK|SECTION\s+\d+|OUTRO|DAS PROBLEM|DIE ENTDECKUNG|DER MECHANISMUS|DIE HERAUSFORDERUNG|DIE AUFL[OÖ]SUNG|IMPLIKATIONEN|FOLGERUNGEN|Evidence Register|Evidenz\s*register|QA[- ]?Report|QA[- ]?Bericht|PART\s+\d+)[\s:]*(.*)$/i;
+  // Section heading patterns: ## or ### level
+  // Documentary (EN): HOOK, PROBLEM, DISCOVERY, MECHANISM, CHALLENGE, RESOLUTION, IMPLICATIONS, OUTRO
+  // Documentary (DE): DAS PROBLEM, DIE ENTDECKUNG, DER MECHANISMUS, DIE HERAUSFORDERUNG, DIE AUFLÖSUNG, IMPLIKATIONEN, FOLGERUNGEN
+  // Explainer: HOOK, FOUNDATION, BUILD, EXAMPLE, NUANCE, SYNTHESIS, NEXT STEPS
+  // Short-form: HOOK, BODY, CTA
+  // Meta: Evidence Register, QA Report, PART N, SECTION N
+  const scriptHeadingRe = /^#{2,3}\s+(?:HOOK|PROBLEM|DISCOVERY|MECHANISM|CHALLENGE|RESOLUTION|IMPLICATIONS|OUTRO|DAS PROBLEM|DIE ENTDECKUNG|DER MECHANISMUS|DIE HERAUSFORDERUNG|DIE AUFL[OÖ]SUNG|IMPLIKATIONEN|FOLGERUNGEN|FOUNDATION|BUILD|EXAMPLE|NUANCE|SYNTHESIS|NEXT\s+STEPS|BODY|CTA|SECTION\s+\d+|Evidence Register|Evidenz\s*register|QA[- ]?Report|QA[- ]?Bericht|PART\s+\d+)[\s:]*(.*)$/i;
   // Non-narration section patterns (evidence tables, QA tables, part dividers)
   const nonNarrationRe = /evidence\s*register|evidenz\s*register|qa[\s-]?report|qa[\s-]?bericht|part\s+\d+.*(?:evidenz|qa|bericht)/i;
 

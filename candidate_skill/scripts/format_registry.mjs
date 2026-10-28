@@ -20,8 +20,8 @@ const DOCUMENTARY_FORMAT = Object.freeze({
   content_type_default: 'factual',
   evidence_requirement: EVIDENCE_REQUIREMENT.MANDATORY,
   voice_default: 'single_narrator',
-  word_range: { min: 1000, max: 15000 },
-  duration_range: { min_minutes: 5, max_minutes: 45 },
+  word_range: Object.freeze({ min: 2500, max: 8000 }),
+  duration_range: Object.freeze({ min_minutes: 5, max_minutes: 45 }),
   spoken_word_budget_tolerance: 0.05,
   arc: Object.freeze({
     id: 'investigation_arc',
@@ -53,8 +53,8 @@ const EXPLAINER_FORMAT = Object.freeze({
   content_type_default: 'factual',
   evidence_requirement: EVIDENCE_REQUIREMENT.PREFERRED,
   voice_default: 'conversational',
-  word_range: { min: 500, max: 10000 },
-  duration_range: { min_minutes: 2, max_minutes: 30 },
+  word_range: Object.freeze({ min: 500, max: 10000 }),
+  duration_range: Object.freeze({ min_minutes: 2, max_minutes: 30 }),
   spoken_word_budget_tolerance: 0.10,
   arc: Object.freeze({
     id: 'concept_progression_arc',
@@ -84,8 +84,8 @@ const SHORT_FORM_FORMAT = Object.freeze({
   content_type_default: null,
   evidence_requirement: EVIDENCE_REQUIREMENT.CONTEXTUAL,
   voice_default: 'direct_address',
-  word_range: { min: 50, max: 800 },
-  duration_range: { min_minutes: 0.5, max_minutes: 3 },
+  word_range: Object.freeze({ min: 50, max: 800 }),
+  duration_range: Object.freeze({ min_minutes: 0.5, max_minutes: 3 }),
   spoken_word_budget_tolerance: 0.10,
   arc: Object.freeze({
     id: 'hook_body_cta',
@@ -110,8 +110,114 @@ const FORMAT_REGISTRY = new Map([
   ['short_form',  SHORT_FORM_FORMAT],
 ]);
 
+function validateCustomFormatSpec(spec) {
+  if (!spec || typeof spec !== 'object') {
+    return 'custom_format_spec must be a non-null object';
+  }
+  if (!spec.name || typeof spec.name !== 'string' || spec.name.trim().length === 0) {
+    return 'custom_format_spec.name must be a non-empty string';
+  }
+  if (!Array.isArray(spec.sections) || spec.sections.length === 0) {
+    return 'custom_format_spec.sections must be a non-empty array';
+  }
+  for (let i = 0; i < spec.sections.length; i++) {
+    const s = spec.sections[i];
+    if (!s || typeof s !== 'object') {
+      return `custom_format_spec.sections[${i}] must be an object`;
+    }
+    if (!s.name || typeof s.name !== 'string' || s.name.trim().length === 0) {
+      return `custom_format_spec.sections[${i}].name must be a non-empty string`;
+    }
+    if (!s.budget_percent || typeof s.budget_percent !== 'string') {
+      return `custom_format_spec.sections[${i}].budget_percent must be a string (e.g. "15-20%")`;
+    }
+    const budgetMatch = s.budget_percent.match(/^(\d+)\s*-\s*(\d+)\s*%?$/);
+    if (!budgetMatch) {
+      return `custom_format_spec.sections[${i}].budget_percent "${s.budget_percent}" is malformed — expected "min-max%" (e.g. "15-20%")`;
+    }
+    const bMin = parseInt(budgetMatch[1], 10);
+    const bMax = parseInt(budgetMatch[2], 10);
+    if (bMin < 0 || bMax > 100 || bMin > bMax) {
+      return `custom_format_spec.sections[${i}].budget_percent "${s.budget_percent}" has invalid range`;
+    }
+  }
+  if (spec.evidence_requirement !== undefined) {
+    const validReqs = new Set(Object.values(EVIDENCE_REQUIREMENT));
+    if (!validReqs.has(spec.evidence_requirement)) {
+      return `custom_format_spec.evidence_requirement "${spec.evidence_requirement}" is invalid — must be one of: ${[...validReqs].join(', ')}`;
+    }
+  }
+  return null;
+}
+
+function buildCustomFormat(spec) {
+  const sections = spec.sections.map(s => {
+    const m = s.budget_percent.match(/^(\d+)\s*-\s*(\d+)\s*%?$/);
+    return Object.freeze({
+      id: s.name.toLowerCase().replace(/\s+/g, '_'),
+      label: s.name,
+      min_pct: parseInt(m[1], 10),
+      max_pct: parseInt(m[2], 10),
+    });
+  });
+
+  return Object.freeze({
+    id: 'custom',
+    name: spec.name,
+    status: FORMAT_STATUS.DESIGN_TARGET,
+    content_type_default: null,
+    evidence_requirement: spec.evidence_requirement || EVIDENCE_REQUIREMENT.CONTEXTUAL,
+    voice_default: spec.voice_model || 'single_narrator',
+    word_range: Object.freeze({ min: 50, max: 50000 }),
+    duration_range: Object.freeze({ min_minutes: 0.5, max_minutes: 180 }),
+    spoken_word_budget_tolerance: 0.10,
+    arc: Object.freeze({
+      id: 'custom_arc',
+      name: `${spec.name} Arc`,
+      sections: Object.freeze(sections),
+    }),
+    qa_checks: Object.freeze([
+      `${sections.length} sections present in correct order`,
+    ]),
+    platforms: Object.freeze(['generic']),
+  });
+}
+
 function resolveFormat(brief) {
+  if (brief.format !== undefined && brief.format !== null && typeof brief.format !== 'string') {
+    return {
+      resolved: null,
+      hold: {
+        type: 'HOLD_FORMAT_MISMATCH',
+        severity: 'BLOCKING',
+        message: `Format must be a string, got ${typeof brief.format}`,
+      },
+    };
+  }
+
   const requested = (brief.format || 'documentary').toLowerCase().trim();
+
+  if (requested === 'custom') {
+    const specError = validateCustomFormatSpec(brief.custom_format_spec);
+    if (specError) {
+      return {
+        resolved: null,
+        hold: {
+          type: 'HOLD_FORMAT_MISMATCH',
+          severity: 'BLOCKING',
+          message: `Custom format invalid: ${specError}`,
+        },
+      };
+    }
+    const customFormat = buildCustomFormat(brief.custom_format_spec);
+    return {
+      resolved: customFormat,
+      warning: {
+        type: 'DESIGN_TARGET_FORMAT',
+        message: `Custom format "${brief.custom_format_spec.name}" is a DESIGN TARGET — user-defined formats require validation through pilot scripts.`,
+      },
+    };
+  }
 
   const format = FORMAT_REGISTRY.get(requested);
   if (!format) {
@@ -120,7 +226,7 @@ function resolveFormat(brief) {
       hold: {
         type: 'HOLD_FORMAT_MISMATCH',
         severity: 'BLOCKING',
-        message: `Format "${requested}" is not registered. Available formats: ${[...FORMAT_REGISTRY.keys()].join(', ')}`,
+        message: `Format "${requested}" is not registered. Available formats: ${[...FORMAT_REGISTRY.keys()].join(', ')}, custom`,
       },
     };
   }
