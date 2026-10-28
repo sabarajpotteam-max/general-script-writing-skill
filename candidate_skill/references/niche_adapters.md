@@ -85,15 +85,46 @@ The niche adapter activates based on the niche code (N01–N05) in the input.
 
 ---
 
-## Adapter Selection Logic
+## Adapter Selection Logic (M1: Dynamic Niche Resolution)
 
 ```
-if niche == "N01": apply N01 rules + UNIVERSAL
-if niche == "N02": apply N02 rules + UNIVERSAL
-if niche == "N03": apply N03 rules + UNIVERSAL
-if niche == "N04": apply N04 rules + UNIVERSAL
-if niche == "N05": apply N05 rules + UNIVERSAL
+resolved = resolveNiche(input.niche)
+
+TIER 1 — Registered (N01–N05 + custom):
+  Apply registered adapter rules + UNIVERSAL
+
+TIER 2 — Recognized Domain (domain:science, domain:history, etc.):
+  Apply domain-specific policies + UNIVERSAL safeguards
+  Multiple overlapping domains combine their policies
+
+TIER 3 — Open Niche (free text):
+  Apply UNIVERSAL writing rules + cross-cutting safety safeguards
+  High-stakes domains flagged for HOLD_REVIEW
+
+Invalid niche codes (N-prefix + digits, not registered): REJECTED
 ```
+
+### Recognized Domains (Tier 2)
+
+| Domain Key | Policies | High Stakes |
+|-----------|----------|-------------|
+| `science` | Citation standards, replication, correlation vs causation | No |
+| `history` | Source verification, quote tracing, translation qualifiers | No |
+| `technology` | Operational vs development status, attribution | No |
+| `health` | Clinical evidence, FDA status, effect sizes | **Yes** |
+| `finance` | Projection disclaimers, risk disclosure | **Yes** |
+| `education` | Pedagogical evidence, audience calibration | No |
+| `sports` | Statistics attribution, record verification | No |
+| `real_estate` | Market data attribution, projection qualifiers | No |
+| `engineering` | Specifications verification, safety disclosures | No |
+
+### Open Niche (Tier 3)
+
+All 24 UNIVERSAL writing standards always apply. Cross-cutting safety
+safeguards (HOLD_HARM, HOLD_UNVERIFIED_FACT, HOLD_SOURCE_ROLE,
+HOLD_DISPUTED_PROVENANCE, HOLD_TITLE_PREMISE, HOLD_NEEDS_RECHECK)
+are enforced. High-stakes topics (medical, legal, financial, military)
+are flagged for HOLD_REVIEW.
 
 All niches share the UNIVERSAL writing standards. The adapter adds
 domain-specific HOLD triggers and qualification requirements.

@@ -9,8 +9,9 @@
  */
 
 import { readFileSync } from "node:fs";
+import { resolveNiche, isRegisteredNiche, registerNiche } from "./niche_resolver.mjs";
 
-const VALID_NICHES = new Set(["N01", "N02", "N03", "N04", "N05"]);
+const REGISTERED_NICHES = new Set(["N01", "N02", "N03", "N04", "N05"]);
 const BLOCKED_SOURCES = new Set(["F-190", "R052"]);
 const QUARANTINED = new Set(["K029", "K030", "K031"]);
 const CAVEATED_SOURCES = new Set(["B70", "B71", "B72"]);
@@ -33,6 +34,8 @@ const HOLD_TYPES = {
   NEEDS_RECHECK: "HOLD_NEEDS_RECHECK"
 };
 
+export { resolveNiche, isRegisteredNiche, registerNiche } from "./niche_resolver.mjs";
+
 export function validateInput(input) {
   const holds = [];
   const warnings = [];
@@ -45,8 +48,16 @@ export function validateInput(input) {
     holds.push({ type: HOLD_TYPES.MISSING_IDENTITY, detail: `Missing fields: ${missing.join(", ")}` });
   }
 
-  if (input.niche && !VALID_NICHES.has(input.niche.toUpperCase())) {
-    holds.push({ type: HOLD_TYPES.MISSING_IDENTITY, detail: `Invalid niche: ${input.niche}` });
+  // Dynamic niche resolution (M1: replaces hardcoded 5-niche restriction)
+  let nicheResolution = null;
+  if (input.niche) {
+    nicheResolution = resolveNiche(input.niche);
+    if (!nicheResolution.validation.valid) {
+      holds.push({ type: HOLD_TYPES.MISSING_IDENTITY, detail: `Invalid niche: ${input.niche} — ${nicheResolution.validation.error}` });
+    }
+    if (nicheResolution.high_stakes) {
+      holds.push({ type: HOLD_TYPES.REVIEW, detail: `High-stakes niche "${input.niche}" flagged for review — domain involves elevated risk` });
+    }
   }
 
   const target = input.target_words || 3000;
@@ -182,6 +193,13 @@ export function validateInput(input) {
     }
   }
 
+  // Tier 2/3 niche validation (M1)
+  if (nicheResolution && nicheResolution.tier >= 2) {
+    if (nicheResolution.tier === 2 && ctx.unverified_domain_expertise_claim) {
+      holds.push({ type: HOLD_TYPES.UNVERIFIED_FACT, detail: "Recognized domain: unverified expertise claim — do not claim verified domain expertise without supporting evidence" });
+    }
+  }
+
   // Title premise check
   if (input.title && input.uncertainty && input.uncertainty !== "confirmed") {
     const overconfident = ["confirmed", "proven", "destroyed", "guaranteed", "verified"];
@@ -207,6 +225,7 @@ export function validateInput(input) {
     holds,
     warnings,
     evidence_register,
+    niche_resolution: nicheResolution || null,
     stages: {
       topic_intake: missing.length === 0 ? "PASS" : "HOLD",
       evidence_validation: holds.filter(h => [HOLD_TYPES.SOURCE_ROLE, HOLD_TYPES.DISPUTED_PROVENANCE, HOLD_TYPES.UNVERIFIED_FACT, HOLD_TYPES.RIGHTS].includes(h.type)).length === 0 ? "PASS" : "HOLD",

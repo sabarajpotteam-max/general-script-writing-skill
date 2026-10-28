@@ -447,7 +447,7 @@ custom_format_spec:
 | content_type = hybrid | evidence for factual claims only | "Hybrid content: evidence required for factual claims. Tag which claims are factual vs creative." |
 | format = custom | custom_format_spec | "Custom format requires custom_format_spec with sections defined." |
 | voice.mode = brand_voice | brand_voice object | "Brand voice mode requires brand_voice guidelines." |
-| platform = youtube_shorts | target_duration ≤ 180s OR target_words ≤ 450 | "YouTube Shorts maximum 3 minutes (180 seconds)." |
+| platform = youtube_shorts | normalized_estimated_duration ≤ 180s (computed from target_words at speaking_rate if target_duration absent; both must satisfy limit when both present) | "YouTube Shorts maximum 3 minutes (180 seconds)." |
 
 ### 3.3 Cross-Field Validation
 

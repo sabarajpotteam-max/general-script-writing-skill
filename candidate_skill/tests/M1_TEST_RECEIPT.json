@@ -1,0 +1,260 @@
+{
+  "executed_at": "2026-10-28T13:54:43.479Z",
+  "suite": "m1_niche_resolver",
+  "total": 50,
+  "passed": 50,
+  "failed": 0,
+  "results": [
+    {
+      "id": "M1-001",
+      "description": "N01 resolves as Tier 1 registered niche",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-002",
+      "description": "N02 resolves as Tier 1 registered niche",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-003",
+      "description": "N03 resolves as Tier 1 with era context requirements",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-004",
+      "description": "N04 resolves as Tier 1 registered niche",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-005",
+      "description": "N05 resolves as Tier 1 registered niche",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-006",
+      "description": "N01 niche has HOLD_STALE_FORECAST in safeguards",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-007",
+      "description": "N03 niche has HOLD_HARM in safeguards",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-008",
+      "description": "N05 niche has HOLD_TITLE_PREMISE in safeguards",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-009",
+      "description": "Can register a custom N06 niche",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-010",
+      "description": "Registered N06 resolves as Tier 1",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-011",
+      "description": "Registered N06 has custom policies",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-012",
+      "description": "isRegisteredNiche returns true for N06 after registration",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-013",
+      "description": "domain:science resolves as Tier 2",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-014",
+      "description": "domain:science has evidence-related policies",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-015",
+      "description": "domain:science is not high-stakes",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-016",
+      "description": "Cooking shows resolves as Tier 3 open niche",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-017",
+      "description": "Cooking shows is NOT rejected",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-018",
+      "description": "Cooking shows has universal safeguards",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-019",
+      "description": "Cooking shows is not high-stakes",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-020",
+      "description": "Artisanal cheese making resolves as Tier 3",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-021",
+      "description": "Medical advice niche is flagged as high-stakes",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-022",
+      "description": "Medical advice niche has HOLD_REVIEW in safeguards",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-023",
+      "description": "Legal analysis niche is flagged as high-stakes",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-024",
+      "description": "Investment trading niche is flagged as high-stakes",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-025",
+      "description": "High-stakes niche triggers HOLD_REVIEW in validation",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-026",
+      "description": "Military history description detects history domain",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-027",
+      "description": "Combined domains merge policies",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-028",
+      "description": "Combined domains merge safeguards",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-029",
+      "description": "Health + finance domain overlap is high-stakes",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-030",
+      "description": "null niche input returns invalid",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-031",
+      "description": "undefined niche input returns invalid",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-032",
+      "description": "Empty string niche input returns invalid",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-033",
+      "description": "Numeric niche input returns invalid",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-034",
+      "description": "Object niche input returns invalid",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-035",
+      "description": "registerNiche rejects null code",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-036",
+      "description": "registerNiche rejects null config",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-037",
+      "description": "N99 is rejected (looks like registered code but isn't)",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-038",
+      "description": "N00 is rejected (unrecognized niche code pattern)",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-039",
+      "description": "domain:nonexistent falls through to Tier 3",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-040",
+      "description": "Free text that doesn't match any domain is Tier 3",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-041",
+      "description": "Existing N01 validation still triggers HOLD_STALE_FORECAST",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-042",
+      "description": "Existing N03 era validation still works",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-043",
+      "description": "Existing N04 synthetic video check still works",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-044",
+      "description": "Blocked source F-190 still triggers HOLD_SOURCE_ROLE",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-045",
+      "description": "Quarantined K029 still triggers HOLD_SOURCE_ROLE",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-046",
+      "description": "Title premise check still works with Tier 3 niche",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-047",
+      "description": "Tier 3 niche still enforces all HOLD types",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-048",
+      "description": "Tier 2 domain still enforces blocked sources",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-049",
+      "description": "Custom niche cannot bypass production gate",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-050",
+      "description": "Niche resolution result included in validation output",
+      "result": "PASS"
+    }
+  ],
+  "disclaimer": "M1 phase tests for dynamic niche resolution. RESEARCH_ONLY."
+}

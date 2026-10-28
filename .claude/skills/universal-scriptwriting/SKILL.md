@@ -33,7 +33,7 @@ Provide these inputs as structured text or JSON:
 
 ```
 Title:    <documentary title>
-Niche:    <N01|N02|N03|N04|N05>
+Niche:    <N01|N02|N03|N04|N05|domain:<name>|"free text description">
 Subject:  <primary subject — person, institution, phenomenon>
 Object:   <what the subject acts on or relates to>
 Mechanism: <how subject and object connect>
@@ -52,6 +52,22 @@ Evidence: <list of evidence items, each with id, description, source type, and e
 | N04 | Disaster News | Casualty figure provisionality, synthetic media disclosure |
 | N05 | Psychology / Explainers (General) | Study citations, effect size qualifiers, replication status |
 
+### Dynamic Niche Resolution (M1)
+
+The skill supports three tiers of niche resolution:
+
+| Tier | Input Format | Behavior |
+|------|-------------|----------|
+| **Tier 1: Registered** | `N01`–`N05` (or custom registered) | Full adapter with specific HOLD rules and context requirements |
+| **Tier 2: Recognized Domain** | `domain:<name>` (e.g., `domain:science`, `domain:engineering`) | Domain-specific policies and safeguards from configurable registry |
+| **Tier 3: Open Niche** | Any free text (e.g., `"artisanal cheese making"`) | Universal writing rules + cross-cutting safety safeguards |
+
+Available Tier 2 domains: `science`, `history`, `technology`, `health`, `finance`, `education`, `sports`, `real_estate`, `engineering`.
+
+High-stakes domains (health, finance, legal, military) are automatically flagged for HOLD_REVIEW.
+Unknown niches are NOT rejected — they receive universal safeguards and are accepted for processing.
+Niche codes matching the pattern N+digits that are not registered (e.g., `N99`) ARE rejected to prevent ambiguity.
+
 ## Workflow Stages
 
 Follow these eight stages in order. Do not skip stages. Record the status
@@ -65,7 +81,7 @@ of each stage (PASS, HOLD, or SKIP) in the final QA report.
 
 1. Parse the user's input into: title, niche, subject, object, mechanism, uncertainty, target word count, and evidence list.
 2. If any required field is missing, report which fields are missing and stop.
-3. Validate the niche code (must be N01–N05). If invalid, stop with error.
+3. Resolve the niche via the dynamic niche resolver. Tier 1 registered niches (N01–N05+) get full adapters; Tier 2 recognized domains get domain-specific policies; Tier 3 open niches get universal safeguards. Invalid niche codes (e.g., N99) stop with error.
 4. Record the **canonical terms**: the exact spellings of subject, object, and mechanism. These terms must appear consistently throughout the script. Do not introduce synonyms that could create ambiguity.
 5. Record the **epistemic qualifier** (e.g., "may," "is believed to"). The script must not upgrade this qualifier without new evidence.
 6. Assign a run ID: `run-<niche>-<YYYYMMDD>-<seq>`.
@@ -356,10 +372,16 @@ The Stage 8 report as specified above.
 
 ---
 
+## HOLD Severity
+
+- **HOLD_HARM** and **HOLD_SOURCE_ROLE** are ALWAYS BLOCKING. They cannot be bypassed, downgraded, or overridden by advisory labels. Unresolved factual-integrity and safety issues must block release.
+- All other HOLD types also block the final verdict unless explicitly resolved.
+
 ## Restrictions
 
 - This skill is a RESEARCH_ONLY candidate. It has not been approved for production use.
 - All K001–K048 technique proposals are RESEARCH_ONLY_NOT_APPROVED_FOR_PRODUCTION.
+- EXPERIMENTAL techniques (X01–X08) are optional organizational aids. They must NOT be silently activated for production output. Any use of an experimental technique must be explicitly labelled as experimental in the script and QA report. Proposed and unapproved techniques must not be enabled without explicit authorization.
 - No wholesale copying of third-party skills, transcripts, or source materials.
 - No SKILL.md installation or publication without explicit authorization.
 - B1/B2 candidate drafts remain RESEARCH_ONLY with unresolved rights and semantic-evaluation conditions.
