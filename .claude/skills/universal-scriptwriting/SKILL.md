@@ -1,5 +1,5 @@
 ---
-description: Evidence-aware documentary scriptwriting with niche adaptation and editorial QA. Candidate — not production.
+description: Evidence-aware multi-format scriptwriting with adaptive content types, controlled research integration, niche adaptation, and editorial QA. Candidate — not production.
 ---
 
 # Universal Professional Scriptwriting Skill (Candidate)
@@ -10,9 +10,11 @@ description: Evidence-aware documentary scriptwriting with niche adaptation and 
 
 ## Purpose
 
-When invoked, this skill produces a structured, evidence-aware long-form
-documentary script from a user-supplied topic, evidence set, and niche
-selection. It enforces epistemic integrity, niche-specific safety rules,
+When invoked, this skill produces a structured, evidence-aware script
+from a user-supplied brief (topic, format, content type, evidence set,
+and niche selection). It supports factual, creative, hybrid, and
+instructional content types with adaptive evidence requirements.
+It enforces epistemic integrity, niche-specific safety rules,
 and editorial quality standards derived from a three-stream research base.
 
 ## Research Provenance
@@ -32,7 +34,7 @@ Crosswalk classification: 24 UNIVERSAL, 26 CONDITIONAL, 44 EXPERIMENTAL, 5 REJEC
 Provide these inputs as structured text or JSON:
 
 ```
-Title:    <documentary title>
+Title:    <script title>
 Niche:    <N01|N02|N03|N04|N05|domain:<name>|"free text description">
 Subject:  <primary subject — person, institution, phenomenon>
 Object:   <what the subject acts on or relates to>
@@ -41,6 +43,31 @@ Uncertainty: <may|likely|is believed to|confirmed — epistemic qualifier>
 Target words: <2500–8000, default 3000>
 Evidence: <list of evidence items, each with id, description, source type, and epistemic status>
 ```
+
+**Optional M3 fields** (omit to use automatic inference):
+
+```
+Format:        <documentary|explainer|short_form|custom> (default: documentary)
+Content type:  <factual|creative|hybrid|instructional> (inferred from format + objectives if omitted)
+Research mode: <client_provided|system_assisted|minimal> (inferred from content type + evidence if omitted)
+Topic:         <topic string for research queries — new-style briefs>
+Audience:      <target audience description>
+Language:      <output language — default: English>
+Objectives:    <inform|educate|entertain|sell|persuade — used for content type inference>
+```
+
+**Content type inference rules** (when `content_type` is not explicit):
+- Documentary / Explainer formats → factual
+- Short-form with objectives "inform"/"educate" → factual
+- Short-form with objectives "entertain" → creative
+- Short-form with objectives "sell"/"persuade" → hybrid
+- Custom format without explicit content_type → HOLD (must be specified)
+
+**Research mode inference rules** (when `research_mode` is not explicit):
+- Evidence provided in brief → client_provided
+- Creative content type → minimal
+- Legacy briefs (subject/object/mechanism, no topic field) without evidence → client_provided (backward compatible)
+- New-style factual/hybrid/instructional briefs without evidence → system_assisted
 
 ### Niche Codes
 
@@ -79,12 +106,13 @@ of each stage (PASS, HOLD, or SKIP) in the final QA report.
 
 **Purpose:** Lock the terminology and epistemic frame before writing begins.
 
-1. Parse the user's input into: title, niche, subject, object, mechanism, uncertainty, target word count, and evidence list.
+1. Parse the user's input into: title, niche, subject, object, mechanism, uncertainty, target word count, evidence list, and optional M3 fields (format, content_type, research_mode, topic, audience, language, objectives).
 2. If any required field is missing, report which fields are missing and stop.
-3. Resolve the niche via the dynamic niche resolver. Tier 1 registered niches (N01–N05+) get full adapters; Tier 2 recognized domains get domain-specific policies; Tier 3 open niches get universal safeguards. Invalid niche codes (e.g., N99) stop with error.
-4. Record the **canonical terms**: the exact spellings of subject, object, and mechanism. These terms must appear consistently throughout the script. Do not introduce synonyms that could create ambiguity.
-5. Record the **epistemic qualifier** (e.g., "may," "is believed to"). The script must not upgrade this qualifier without new evidence.
-6. Assign a run ID: `run-<niche>-<YYYYMMDD>-<seq>`.
+3. Resolve the format (default: documentary) and niche via the dynamic niche resolver. Tier 1 registered niches (N01–N05+) get full adapters; Tier 2 recognized domains get domain-specific policies; Tier 3 open niches get universal safeguards. Invalid niche codes (e.g., N99) stop with error.
+4. **Resolve M3 content type and research mode.** Infer content_type from explicit field, format default, or objectives. Infer research_mode from explicit field, evidence presence, content type, or legacy brief detection. Record both with their inference source.
+5. Record the **canonical terms**: the exact spellings of subject, object, and mechanism. These terms must appear consistently throughout the script. Do not introduce synonyms that could create ambiguity.
+6. Record the **epistemic qualifier** (e.g., "may," "is believed to"). The script must not upgrade this qualifier without new evidence.
+7. Assign a run ID: `run-<niche>-<YYYYMMDD>-<seq>`.
 
 **HOLD conditions:**
 - Missing required field → HOLD_MISSING_IDENTITY
@@ -95,8 +123,26 @@ of each stage (PASS, HOLD, or SKIP) in the final QA report.
 ### Stage 2: Evidence and Claim Research Validation
 
 **Purpose:** Verify every evidence item is usable and properly qualified.
+Evidence requirements adapt to content type and research mode (resolved in Stage 1).
 
-For each evidence item in the input:
+**Conditional evidence handling by content type:**
+
+| Content Type | Evidence Register Required | Fabricated Facts Blocked | Notes |
+|---|---|---|---|
+| **factual** | Yes — all substantive claims need evidence | Yes | Full evidence validation applies |
+| **creative** | No — no evidence register required | Yes — fabricated real-world facts still blocked | Creative fiction is allowed; claiming real events/people did things they didn't is not |
+| **hybrid** | Yes — for factual claims only | Yes | Creative elements tracked separately from factual claims |
+| **instructional** | Yes — accuracy verification required | Yes | Formal citations optional for low-risk common procedures |
+
+**Conditional evidence handling by research mode:**
+
+| Research Mode | Behavior |
+|---|---|
+| **client_provided** | Evidence must be in the brief. Empty evidence → HOLD_UNVERIFIED_FACT (legacy behavior) |
+| **system_assisted** | No evidence in brief is a warning, not a HOLD. System-assisted research needed before factual claims |
+| **minimal** | No evidence register required (creative content) |
+
+For each evidence item in the input (skip if content type is `creative` with no evidence provided):
 
 1. **Check blocked sources.** If the evidence ID matches F-190, R052, or any item in the blocked list, reject it with HOLD_SOURCE_ROLE. F-190 is a negative finding (readability formulas are NOT validated for listening) and cannot be used as positive evidence. R052 has a non-support relation.
 2. **Check quarantined techniques.** If the evidence references K029, K030, or K031, reject it with HOLD_SOURCE_ROLE. These are quarantined for lacking YouTube script-effect transfer evidence.
@@ -110,6 +156,7 @@ For each evidence item in the input:
 - Quarantined technique referenced → HOLD_SOURCE_ROLE
 - No provenance → HOLD_DISPUTED_PROVENANCE
 - Evidence claims "confirmed" but only one source → HOLD_UNVERIFIED_FACT
+- Factual/hybrid/instructional content with no evidence AND research_mode is client_provided → HOLD_NO_EVIDENCE
 
 ---
 
@@ -232,7 +279,7 @@ For each section in the blueprint:
    - Scene-sequel cycles are a narrative option for fiction-adjacent formats. [F-012, K015]
    - Tension/recovery alternation is an untested hypothesis about pacing. [K017]
 
-5. **Include evidence references** inline as [E-XXX] after each factual claim.
+5. **Include evidence references** inline as [E-XXX] after each factual claim (required for factual/hybrid/instructional content types; not required for creative, but fabricated real-world facts are still blocked regardless of content type).
 6. **Write scene directions** in brackets: `[SCENE: description]`, `[B-ROLL: description]`.
 7. **Write narration** as `NARRATOR: text`.
 8. **Write interviews** as `[INTERVIEW: Name, Title]` followed by `NAME: quote`.
@@ -375,21 +422,29 @@ These items MUST NOT appear as positive evidence or validated rules in any scrip
 
 ## Output Format
 
-The final output consists of three parts:
+The final output consists of four parts:
 
 ### Part 1: The Script
-A complete documentary script in Markdown with:
-- Title and metadata header
+A complete script in Markdown with:
+- Title and metadata header (including content type and research mode)
 - Scene directions in brackets
 - Narrator voiceover text
 - Interview segments (if applicable)
-- Inline evidence references [E-XXX]
+- Inline evidence references [E-XXX] (when content type requires evidence)
 - Section headers matching the blueprint
 
 ### Part 2: The Evidence Register
 A table mapping every [E-XXX] reference to its source, status, and caveats.
+For creative content with no evidence register, this part states: "Evidence register not required for creative content type."
 
-### Part 3: The QA Report
+### Part 3: The M3 Resolution Summary
+Content type, research mode, evidence policy, and any QA limitations:
+- Content type (and inference source: explicit, format_default, objectives_inference, safe_fallback)
+- Research mode (and inference source: explicit, evidence_present, creative_default, legacy_factual_default, factual_no_evidence)
+- Evidence policy description
+- QA limitations (e.g., custom format structural QA limitations)
+
+### Part 4: The QA Report
 The Stage 8 report as specified above.
 
 ---
@@ -397,12 +452,14 @@ The Stage 8 report as specified above.
 ## HOLD Severity
 
 - **HOLD_HARM** and **HOLD_SOURCE_ROLE** are ALWAYS BLOCKING. They cannot be bypassed, downgraded, or overridden by advisory labels. Unresolved factual-integrity and safety issues must block release.
+- **HOLD_NO_EVIDENCE** blocks when content type requires evidence and research_mode is not system_assisted. For system_assisted mode, missing evidence is a warning (research needed before generation).
 - All other HOLD types also block the final verdict unless explicitly resolved.
 
 ## Restrictions
 
 - This skill is a RESEARCH_ONLY candidate. It has not been approved for production use.
 - All K001–K048 technique proposals are RESEARCH_ONLY_NOT_APPROVED_FOR_PRODUCTION.
+- **Research integration:** system_assisted research mode indicates that research tools are needed but does NOT automatically execute research. No K-series research proposal may be auto-approved. Live web research must never be simulated — never invent URLs, research results, quotations, or citations.
 - EXPERIMENTAL techniques (X01–X08) are optional organizational aids. They must NOT be silently activated for production output. Any use of an experimental technique must be explicitly labelled as experimental in the script and QA report. Proposed and unapproved techniques must not be enabled without explicit authorization.
 - No wholesale copying of third-party skills, transcripts, or source materials.
 - No SKILL.md installation or publication without explicit authorization.

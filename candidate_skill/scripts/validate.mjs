@@ -12,6 +12,7 @@
 import { readFileSync } from "node:fs";
 import { resolveNiche, isRegisteredNiche, registerNiche, isBuiltinNiche } from "./niche_resolver.mjs";
 import { resolveFormat, getFormatDefinition, isRegisteredFormat, FORMAT_STATUS } from "./format_registry.mjs";
+import { resolveM3, CONTENT_TYPES, RESEARCH_MODES, inferContentType, inferResearchMode, getEvidencePolicy } from "./content_type_engine.mjs";
 
 const REGISTERED_NICHES = new Set(["N01", "N02", "N03", "N04", "N05"]);
 const BLOCKED_SOURCES = new Set(["F-190", "R052"]);
@@ -38,6 +39,7 @@ const HOLD_TYPES = {
 
 export { resolveNiche, isRegisteredNiche, registerNiche, isBuiltinNiche } from "./niche_resolver.mjs";
 export { resolveFormat, getFormatDefinition, isRegisteredFormat, FORMAT_STATUS } from "./format_registry.mjs";
+export { CONTENT_TYPES, RESEARCH_MODES, inferContentType, inferResearchMode, getEvidencePolicy, resolveM3 } from "./content_type_engine.mjs";
 
 export function validateInput(input) {
   const holds = [];
@@ -94,10 +96,20 @@ export function validateInput(input) {
     warnings.push(`Target word count ${target} outside recommended range 2500-8000`);
   }
 
-  // Stage 2: Evidence Validation
+  // M3: Content type and research mode resolution
+  const m3Result = resolveM3(input, resolvedFormat);
+  for (const h of m3Result.holds) holds.push(h);
+  for (const w of m3Result.warnings) warnings.push(w);
+  const contentType = m3Result.content_type;
+  const researchMode = m3Result.research_mode;
+  const evidencePolicy = m3Result.evidence_policy;
+
+  // Stage 2: Evidence Validation (conditional on content type)
   const evidence = input.evidence || [];
-  if (evidence.length === 0) {
-    holds.push({ type: HOLD_TYPES.UNVERIFIED_FACT, detail: "No evidence items provided — factual documentary requires at least one evidence source" });
+  if (evidence.length === 0 && evidencePolicy.evidence_required && researchMode !== 'system_assisted') {
+    holds.push({ type: HOLD_TYPES.UNVERIFIED_FACT, detail: `No evidence items provided — ${contentType} content requires at least one evidence source` });
+  } else if (evidence.length === 0 && evidencePolicy.evidence_required && researchMode === 'system_assisted') {
+    warnings.push(`No evidence provided — system_assisted research needed before ${contentType} factual claims`);
   }
 
   for (const item of evidence) {
@@ -264,9 +276,19 @@ export function validateInput(input) {
       evidence_requirement: resolvedFormat.evidence_requirement,
       spoken_word_budget_tolerance: resolvedFormat.spoken_word_budget_tolerance,
     } : null,
+    m3_resolution: {
+      content_type: contentType,
+      content_type_source: m3Result.content_type_source,
+      research_mode: researchMode,
+      research_mode_source: m3Result.research_mode_source,
+      evidence_policy: evidencePolicy.description,
+      qa_limitations: m3Result.qa_limitations,
+      generation_permitted: m3Result.generation_permitted && holds.length === 0,
+    },
     stages: {
       topic_intake: missing.length === 0 ? "PASS" : "HOLD",
       format_resolution: holds.filter(h => h.type === "HOLD_FORMAT_MISMATCH").length === 0 ? "PASS" : "HOLD",
+      content_type_resolution: m3Result.holds.length === 0 ? "PASS" : "HOLD",
       evidence_validation: holds.filter(h => [HOLD_TYPES.SOURCE_ROLE, HOLD_TYPES.DISPUTED_PROVENANCE, HOLD_TYPES.UNVERIFIED_FACT, HOLD_TYPES.RIGHTS].includes(h.type)).length === 0 ? "PASS" : "HOLD",
       niche_check: holds.filter(h => [HOLD_TYPES.STALE_FORECAST, HOLD_TYPES.HARM, HOLD_TYPES.REVIEW].includes(h.type)).length === 0 ? "PASS" : "HOLD",
       title_check: holds.filter(h => h.type === HOLD_TYPES.TITLE_PREMISE).length === 0 ? "PASS" : "HOLD",

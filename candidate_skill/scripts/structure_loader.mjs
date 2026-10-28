@@ -23,19 +23,19 @@ function loadStructure(brief) {
       ? estimateWordsFromDuration(brief.target_duration, format)
       : formatDefaultWords(format);
 
-  const sections = arc.sections.map(s => {
-    const minWords = Math.round(targetWords * s.min_pct / 100);
-    const maxWords = Math.round(targetWords * s.max_pct / 100);
+  const budgetResult = normalizeSectionBudgets(arc.sections, targetWords);
+  if (budgetResult.error) {
     return {
-      id: s.id,
-      label: s.label,
-      min_pct: s.min_pct,
-      max_pct: s.max_pct,
-      min_words: minWords,
-      max_words: maxWords,
-      target_words: Math.round((minWords + maxWords) / 2),
+      success: false,
+      hold: {
+        type: 'HOLD_FORMAT_MISMATCH',
+        severity: 'BLOCKING',
+        message: budgetResult.error,
+      },
+      structure: null,
     };
-  });
+  }
+  const sections = budgetResult.sections;
 
   return {
     success: true,
@@ -81,6 +81,45 @@ function estimateWordsFromDuration(durationStr, format) {
 
   const wordsPerMinute = 150;
   return Math.round(minutes * wordsPerMinute);
+}
+
+function normalizeSectionBudgets(arcSections, targetWords) {
+  const totalMinPct = arcSections.reduce((s, sec) => s + sec.min_pct, 0);
+  const totalMaxPct = arcSections.reduce((s, sec) => s + sec.max_pct, 0);
+
+  if (totalMinPct > 100) {
+    return { error: `Section minimum budgets sum to ${totalMinPct}% (> 100%) — infeasible budget` };
+  }
+  if (totalMaxPct < 100) {
+    return { error: `Section maximum budgets sum to ${totalMaxPct}% (< 100%) — infeasible budget` };
+  }
+
+  const rawTargets = arcSections.map(s => {
+    const midPct = (s.min_pct + s.max_pct) / 2;
+    return { ...s, midPct, rawTarget: targetWords * midPct / 100 };
+  });
+
+  const rawSum = rawTargets.reduce((sum, s) => sum + s.rawTarget, 0);
+
+  const sections = rawTargets.map(s => {
+    const minWords = Math.round(targetWords * s.min_pct / 100);
+    const maxWords = Math.round(targetWords * s.max_pct / 100);
+    const scaledTarget = rawSum > 0
+      ? Math.round(s.rawTarget * targetWords / rawSum)
+      : Math.round((minWords + maxWords) / 2);
+    const clampedTarget = Math.max(minWords, Math.min(maxWords, scaledTarget));
+    return {
+      id: s.id,
+      label: s.label,
+      min_pct: s.min_pct,
+      max_pct: s.max_pct,
+      min_words: minWords,
+      max_words: maxWords,
+      target_words: clampedTarget,
+    };
+  });
+
+  return { sections };
 }
 
 function formatDefaultWords(format) {
