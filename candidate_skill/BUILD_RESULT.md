@@ -10,15 +10,15 @@
 - **37/37 PASS** — All QA cases including baseline
 - Receipt: `prototype/offline_synthetic_v01/TEST_EXECUTION_RECEIPT.json`
 
-### Skill Integration Tests (Phase 2 + 2.1 + 2.2)
-- **80/80 PASS** — Original 45 + 8 Phase 2.1 (INT-046–INT-053) + 12 Phase 2.2 (INT-054–INT-065) + 6 Final Acceptance (INT-066–INT-071) + 9 Final Corrections (INT-072–INT-080) + updates (INT-016, INT-038, INT-044, INT-048, INT-059)
+### Skill Integration Tests (Phase 2 + 2.1 + 2.2 + Practical Pilot)
+- **85/85 PASS** — Original 45 + 8 Phase 2.1 (INT-046–INT-053) + 12 Phase 2.2 (INT-054–INT-065) + 6 Final Acceptance (INT-066–INT-071) + 9 Final Corrections (INT-072–INT-080) + 5 Practical Pilot (INT-081–INT-085) + updates (INT-016, INT-017, INT-038, INT-040, INT-044, INT-048, INT-059)
 - Receipt: `candidate_skill/tests/INTEGRATION_TEST_RECEIPT.json`
 
 ### Skill Invocation Mechanism Tests (Final Acceptance)
 - **12/12 PASS** — Skill discovery, pipeline execution, stage validation, production gate, blocked sources
 - Run from isolated non-production workspace with SKILL.md at `.claude/skills/universal-scriptwriting/SKILL.md`
 
-### Combined: **129/129 PASS** (37 prototype + 80 integration + 12 invocation pipeline)
+### Combined: **134/134 PASS** (37 prototype + 85 integration + 12 invocation pipeline)
 
 ## Phase 2.1 — Independent QA Defect Fixes
 
@@ -106,10 +106,31 @@ Four adversarial defect categories fixed in `validate.mjs`, plus one bonus fix:
 - **QA exit code:** 0 (all dimensions PASS)
 - **Files:** `german_trial_input.json`, `german_trial_script.md`, `german_trial_qa_report.json`
 
-### Failed Acceptance Criteria
+### Acceptance Status Update
 
 - **Multilingual epistemic QA:** PASS — German certainty upgrades now detected
-- **Native Skill invocation:** NOT_VERIFIED — environment limitation, not a code defect
+- **Native Skill invocation:** VERIFIED — child session confirmed discovery and invocation (pilot #1: `c1ad374`, pilot #2: `3b0c274`)
+- **Spoken narration word budget:** PASS — enforced on spoken_narration_words (±5%), not total_words
+- **N03 niche scope:** PASS — era_start/era_end now required, WW1/WW2 overlap enforced
+
+## Practical Pilot #2 — WW2 German N03 (Spoken Budget Enforcement)
+
+- **Title:** "Das Schattenorchester von Theresienstadt: Wie Musiker im Lager mit verbotenen Noten überlebten"
+- **Niche:** N03 (German WW1/WW2 Human Stories)
+- **Era:** 1943-1945 (WW2 — scope validated)
+- **Language:** German throughout
+- **Total section words:** 3,145 | **Spoken narration words:** 2,852 (target: 3,000, range: 2,850-3,150)
+- **Word budget status:** PASS (spoken narration within ±5% of target)
+- **Evidence items:** 5 (all fictional, all properly referenced)
+- **Evidence traceability:** 5/5 referenced — PASS
+- **Epistemic integrity:** No upgrades — PASS (multilingual check active)
+- **Subject/object consistency:** PASS
+- **Input validation:** PASS (0 HOLDs)
+- **N03 niche scope:** PASS (1943-1945 overlaps WW2)
+- **Validator exit code:** 0 (all dimensions PASS, independently verified)
+- **Child session:** `session_01DvLymqMhUL6RabK6aQro7U`
+- **Commit:** `3b0c274`
+- **Files:** `pilot2_results/script_output_run-N03-20261028-001.md`, `pilot2_results/PILOT_QA_REPORT.json`, `pilot2_results/NATIVE_DISCOVERY_REPORT.md`
 
 ## Demo Script
 
