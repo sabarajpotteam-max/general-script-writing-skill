@@ -183,10 +183,10 @@ test("INT-017", "N03 invented quote triggers HOLD_HARM", () => {
   const input = {
     ...demoInput,
     niche: "N03",
-    niche_context: { invented_quote_as_historical: true }
+    niche_context: { invented_quote_as_historical: true, era_start: 1942, era_end: 1943 }
   };
   const r = validateInput(input);
-  return r.holds.some(h => h.type === "HOLD_HARM");
+  return r.holds.some(h => h.type === "HOLD_HARM" && h.detail.includes("Invented quote"));
 });
 
 test("INT-018", "N04 synthetic video triggers HOLD_HARM", () => {
@@ -357,8 +357,8 @@ test("INT-039", "N02 without operational claims passes", () => {
   return r.stages.niche_check === "PASS";
 });
 
-test("INT-040", "N03 without invented quotes passes", () => {
-  const input = { ...demoInput, niche: "N03" };
+test("INT-040", "N03 without invented quotes passes (WW2 era)", () => {
+  const input = { ...demoInput, niche: "N03", niche_context: { era_start: 1942, era_end: 1943 } };
   const r = validateInput(input);
   return r.stages.niche_check === "PASS";
 });
@@ -758,6 +758,41 @@ test("INT-080", "Script with confirmed uncertainty allows strong claims", () => 
   );
   const r = analyzeScript(injected, confirmedInput);
   return r.epistemic_integrity === "PASS";
+});
+
+// === PRACTICAL PILOT CORRECTION TESTS ===
+
+test("INT-081", "Word budget enforced on spoken narration words, not total words", () => {
+  const r = analyzeScript(germanScript, germanInput);
+  // germanScript has 2524 total but 2333 spoken, target 2800
+  // 2800*0.95=2660, spoken 2333 < 2660 → REVIEW
+  return r.word_budget_status === "REVIEW" && r.spoken_narration_words < r.total_words;
+});
+
+test("INT-082", "N03 missing era_start/era_end triggers HOLD_MISSING_IDENTITY", () => {
+  const input = { ...demoInput, niche: "N03", niche_context: {} };
+  const r = validateInput(input);
+  return r.holds.some(h => h.type === "HOLD_MISSING_IDENTITY" && h.detail.includes("era_start"));
+});
+
+test("INT-083", "N03 with 1992-1995 era (outside WW1/WW2) triggers HOLD_HARM", () => {
+  const input = { ...demoInput, niche: "N03", niche_context: { era_start: 1992, era_end: 1995 } };
+  const r = validateInput(input);
+  return r.holds.some(h => h.type === "HOLD_HARM" && h.detail.includes("outside scope"));
+});
+
+test("INT-084", "N03 with 1942-1943 era (WW2) passes niche scope check", () => {
+  const input = { ...demoInput, niche: "N03", niche_context: { era_start: 1942, era_end: 1943 } };
+  const r = validateInput(input);
+  return !r.holds.some(h => h.detail && h.detail.includes("outside scope")) &&
+         !r.holds.some(h => h.detail && h.detail.includes("era_start"));
+});
+
+test("INT-085", "N03 with 1916-1918 era (WW1) passes niche scope check", () => {
+  const input = { ...demoInput, niche: "N03", niche_context: { era_start: 1916, era_end: 1918 } };
+  const r = validateInput(input);
+  return !r.holds.some(h => h.detail && h.detail.includes("outside scope")) &&
+         !r.holds.some(h => h.detail && h.detail.includes("era_start"));
 });
 
 // === Print results ===

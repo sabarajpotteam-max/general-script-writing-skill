@@ -160,6 +160,17 @@ export function validateInput(input) {
     if (ctx.invented_quote_as_historical) {
       holds.push({ type: HOLD_TYPES.HARM, detail: "Invented quote presented as historical" });
     }
+    if (ctx.era_start != null && ctx.era_end != null) {
+      const start = Number(ctx.era_start);
+      const end = Number(ctx.era_end);
+      const overlapsWW1 = start <= 1918 && end >= 1914;
+      const overlapsWW2 = start <= 1945 && end >= 1939;
+      if (!overlapsWW1 && !overlapsWW2) {
+        holds.push({ type: HOLD_TYPES.HARM, detail: `N03 niche requires WW1 (1914-1918) or WW2 (1939-1945) era — story period ${start}-${end} falls outside scope` });
+      }
+    } else {
+      holds.push({ type: HOLD_TYPES.MISSING_IDENTITY, detail: "N03 niche requires era_start and era_end years in niche_context to verify WW1/WW2 scope" });
+    }
   }
 
   if (niche === "N04") {
@@ -328,7 +339,10 @@ export function analyzeScript(scriptText, input) {
     total_words: totalWords,
     spoken_narration_words: spokenNarrationWords,
     target_words: input.target_words || 3000,
-    word_budget_status: totalWords >= 2500 && totalWords <= (input.target_words || 3000) * 1.1 ? "PASS" : "REVIEW",
+    word_budget_status: (() => {
+      const tgt = input.target_words || 3000;
+      return spokenNarrationWords >= Math.floor(tgt * 0.95) && spokenNarrationWords <= Math.ceil(tgt * 1.05) ? "PASS" : "REVIEW";
+    })(),
     evidence_referenced: referencedIds,
     evidence_unreferenced: unreferencedIds,
     evidence_traceability: unreferencedIds.length === 0 ? "PASS" : "REVIEW",

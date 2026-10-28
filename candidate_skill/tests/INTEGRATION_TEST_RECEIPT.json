@@ -1,8 +1,8 @@
 {
-  "executed_at": "2026-10-28T07:17:16.526Z",
+  "executed_at": "2026-10-28T07:22:59.553Z",
   "suite": "skill_integration",
-  "total": 80,
-  "passed": 80,
+  "total": 85,
+  "passed": 85,
   "failed": 0,
   "results": [
     {
@@ -202,7 +202,7 @@
     },
     {
       "id": "INT-040",
-      "description": "N03 without invented quotes passes",
+      "description": "N03 without invented quotes passes (WW2 era)",
       "result": "PASS"
     },
     {
@@ -403,6 +403,31 @@
     {
       "id": "INT-080",
       "description": "Script with confirmed uncertainty allows strong claims",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-081",
+      "description": "Word budget enforced on spoken narration words, not total words",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-082",
+      "description": "N03 missing era_start/era_end triggers HOLD_MISSING_IDENTITY",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-083",
+      "description": "N03 with 1992-1995 era (outside WW1/WW2) triggers HOLD_HARM",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-084",
+      "description": "N03 with 1942-1943 era (WW2) passes niche scope check",
+      "result": "PASS"
+    },
+    {
+      "id": "INT-085",
+      "description": "N03 with 1916-1918 era (WW1) passes niche scope check",
       "result": "PASS"
     }
   ],

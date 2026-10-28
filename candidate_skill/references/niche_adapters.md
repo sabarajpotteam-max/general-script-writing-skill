@@ -39,9 +39,12 @@ The niche adapter activates based on the niche code (N01–N05) in the input.
 ## N03: German WW1/WW2 Human Stories
 
 **Core concern:** Historical accuracy, quote authenticity, survivor dignity.
+**Temporal scope:** Stories must overlap WW1 (1914-1918) or WW2 (1939-1945). Provide `era_start` and `era_end` years in `niche_context`.
 
 | Rule | Source | HOLD if violated |
 |------|--------|-----------------|
+| Story era must overlap WW1 or WW2 period | Scope check | HOLD_HARM |
+| era_start and era_end required in niche_context | Scope check | HOLD_MISSING_IDENTITY |
 | Every historical quote must trace to a documented source | K025 | HOLD_HARM |
 | Invented quotes as historical → immediate HOLD | K025 | HOLD_HARM |
 | Translations must preserve qualifiers ("allegedly," "reportedly") | K023 | HOLD_REVIEW |
