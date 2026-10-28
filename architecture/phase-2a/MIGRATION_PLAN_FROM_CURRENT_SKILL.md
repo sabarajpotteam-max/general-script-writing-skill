@@ -207,11 +207,20 @@ M3.4  Modify SKILL.md evidence citation requirement:
         - Not applicable for creative mode
 M3.5  Add research_mode field to schema:
         - Values: client_provided | system_assisted | minimal
-        - Default: client_provided (backward compat — current behavior)
-        - system_assisted: system builds evidence register from approved sources
-          (S/F/R/K/V series), client reviews before generation
+        - Default: INFERRED — client_provided if evidence register present
+          (backward compat), system_assisted if evidence register absent
+          (default for new briefs). Explicit value always overrides.
+        - system_assisted: system researches topic-specific facts using
+          available authorized research tools (web search, databases, APIs).
+          Builds evidence register with source provenance, timestamp checks
+          and factual verification. Client reviews before generation.
+          NOTE: S/F/R/K/V craft library informs HOW to write (rules,
+          techniques, formats) — NOT used for topic-specific fact research.
         - Validation: system_assisted NEVER fabricates citations,
-          NEVER presents missing evidence as verified, flags gaps as [UNRESOURCED]
+          NEVER presents missing evidence as verified, flags gaps as [UNRESOURCED],
+          reports limitation when reliable evidence is unavailable,
+          triggers HOLD for unsupported claims
+        - Normal client needs only topic + niche + audience + format + duration
         - See UNIVERSAL_ARCHITECTURE_BLUEPRINT §3.4 for full workflow design
 M3.6  Add creative content fields to schema:
         - characters (optional, for creative/hybrid)
@@ -229,15 +238,18 @@ M3.8  Add tests for:
         - Fiction frame check catches real claims as fact
         - U08/U10/U22 conditional activation
         - research_mode=client_provided preserves current behavior (regression)
-        - research_mode=system_assisted builds evidence register from approved sources
+        - research_mode=system_assisted researches topic-specific facts via authorized tools
         - system_assisted mode never fabricates citations
+        - system_assisted reports limitation when evidence unavailable
+        - research_mode inference: evidence present → client_provided, absent → system_assisted
         - Missing evidence flagged as [UNRESOURCED]
         - Documentary ±5% spoken narration word-budget tolerance regression test
 ```
 
 **Backward compatibility guarantee:**
 - Brief without `content_type` + with evidence list → inferred as "factual" → UNCHANGED
-- Brief without `research_mode` → defaults to "client_provided" → UNCHANGED (current behavior)
+- Brief without `research_mode` + with evidence list → inferred as "client_provided" → UNCHANGED (current behavior)
+- Brief without `research_mode` + without evidence list → inferred as "system_assisted" → new default for new briefs
 - Documentary format always infers "factual"
 - Evidence validation severity unchanged for factual mode with client_provided research_mode
 - Documentary ±5% spoken narration word-budget tolerance PRESERVED in QA regression tests
@@ -506,6 +518,11 @@ WEEK:  1    2    3    4    5    6    7    8    9
 | M8 | End-to-end per format (minimum 8 formats) | 8 |
 | **TOTAL** | | **~103 new tests** |
 | **Grand total** | 122 core + 12 invocation-pipeline + ~103 new | **~237 tests** |
+
+**Validation Type Distinction:**
+- All tests above are **technical prototype validation** (automated) — they verify code correctness, schema compliance, rule activation, pipeline integrity and regression safety.
+- **Professional writing quality validation** (human expert assessment) is a separate requirement: evaluating that actual script output meets professional scriptwriting standards (narrative coherence, voice consistency, audience engagement, craft quality). Required before any production release claim but not part of the automated test count.
+- Non-documentary formats and multilingual capabilities remain **DESIGN TARGETS** until per-format pilot scripts AND expert writing quality review validate them.
 
 ### 8.3 End-to-End Pilot Scripts
 

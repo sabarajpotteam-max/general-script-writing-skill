@@ -146,21 +146,33 @@ content_type:
 research_mode:
   type: enum
   required: false
-  default: "client_provided"  # backward compatibility — current behavior
+  default: "INFERRED"  # see inference rules below
   values: [client_provided, system_assisted, minimal]
   description: >
     §2.5 Research Integration — how evidence is sourced:
-    - client_provided: client supplies evidence register (CURRENT BEHAVIOR, unchanged)
-    - system_assisted: system builds evidence register from approved source
-      registries (S/F/R/K/V series). System researches when supported, validates
-      sources, distinguishes missing evidence ([UNRESOURCED]) from verified facts.
-      NEVER invents citations. Client reviews register before generation.
+    - client_provided: client supplies evidence register (LEGACY BEHAVIOR, preserved
+      for backward compatibility). Required for briefs with existing evidence register.
+    - system_assisted: system researches topic-specific facts using available
+      authorized research tools (web search, databases, APIs). Builds evidence
+      register with source provenance, timestamp checks and factual verification.
+      Client reviews register before generation. NEVER invents citations.
+      NOTE: The S/F/R/K/V craft research library informs HOW to write (rules,
+      techniques, formats) — it is NOT used for topic-specific factual research.
     - minimal: creative/instructional content, no formal evidence register needed
+  inference_rules: >
+    When research_mode is not explicitly set:
+    - Brief includes evidence register (evidence field present + non-empty) → client_provided
+    - Brief lacks evidence register → system_assisted (default for new briefs)
+    - content_type = creative AND no evidence → minimal
+    - Explicit research_mode always overrides inference
   constraints:
     - system_assisted with content_type=factual → system research phase before generation
     - system_assisted NEVER fabricates citations or sources
     - Missing evidence flagged as [UNRESOURCED], not silently omitted
+    - When reliable evidence is unavailable → report limitation + HOLD unsupported claims
     - Generated evidence register is reviewable before script generation proceeds
+    - Normal client needs only topic + niche + audience + format + duration — no evidence
+      register or subject/object/mechanism fields required for system_assisted mode
 
 target_duration:
   type: string
@@ -390,8 +402,8 @@ custom_requirements:
 experimental_techniques:
   type: array[enum]
   required: false
-  values: [X01, X02, X03, X04, X05, X06, X07, X08]
-  description: "Explicit opt-in for experimental writing techniques. Labelled in output."
+  values: [X01, X02, X03, X04, X05, X06, X07, X08, XN01, XN02, XN03, XN04, XN05, XN06]
+  description: "Explicit opt-in for experimental writing techniques. X01-X08 are canonical (from references/writing_rules.md). XN01-XN06 are proposed new techniques (require separate validation). All labelled EXPERIMENTAL in output."
 
 custom_format_spec:
   type: object
@@ -431,7 +443,7 @@ custom_format_spec:
 | Condition | Required Fields | Error if Missing |
 |---|---|---|
 | content_type = factual AND research_mode = client_provided | subject, object, mechanism, uncertainty, evidence (≥ 1 item) | "Factual content with client-provided evidence requires subject, object, mechanism, uncertainty, and at least one evidence item." |
-| content_type = factual AND research_mode = system_assisted | subject (recommended), topic sufficient | "System-assisted research mode: system will build evidence register from approved sources. Client reviews before generation. See §2.5 Research Integration." |
+| content_type = factual AND research_mode = system_assisted | topic sufficient (subject/object/mechanism optional — system derives from topic research) | "System-assisted research mode: system researches topic-specific facts using authorized research tools. Client reviews evidence register before generation. See §2.5 Research Integration." |
 | content_type = hybrid | evidence for factual claims only | "Hybrid content: evidence required for factual claims. Tag which claims are factual vs creative." |
 | format = custom | custom_format_spec | "Custom format requires custom_format_spec with sections defined." |
 | voice.mode = brand_voice | brand_voice object | "Brand voice mode requires brand_voice guidelines." |
@@ -556,7 +568,7 @@ evidence:
 #              but auto-filled for legacy briefs)
 #   language = "en" (smart default — required in 2.0 schema
 #              but auto-filled for legacy briefs)
-#   research_mode = "client_provided" (default — current behavior preserved)
+#   research_mode = "client_provided" (inferred — evidence register present)
 #   target_words = 4500 (direct)
 #   subject, object, mechanism, uncertainty = direct (factual mode)
 #   evidence = direct (factual mode)
@@ -566,7 +578,7 @@ evidence:
 The 2.0 schema declares `audience` and `language` as REQUIRED fields, but legacy 1.0 briefs do not include them. Resolution: these fields are "required-with-defaults" — they always have values, but the system auto-fills them when absent:
 - Missing `audience` → `"general_adult"` (safe default, matches current implicit behavior)
 - Missing `language` → `"en"` (safe default, matches current English-only behavior)
-- Missing `research_mode` → `"client_provided"` (preserves current evidence-required behavior)
+- Missing `research_mode` → INFERRED: `"client_provided"` if evidence register present (preserves legacy behavior), `"system_assisted"` if evidence register absent (default for new briefs)
 
 This ensures zero breaking changes for any valid 1.0 brief while maintaining the field as required for new 2.0 briefs where explicit specification is preferred.
 
@@ -752,7 +764,7 @@ COMPATIBILITY GUARANTEE:
 2. **Smart defaults** — missing fields system infer karta hai, reject nahi karta; required-with-defaults pattern ensures backward compatibility
 3. **Backward compatible** — current N01-N05 briefs bina kisi change ke kaam karenge → **DESIGN TARGET** until executed regression tests establish it
 4. **Content type system** — factual/creative/hybrid/instructional modes se evidence handling flexible
-5. **Research mode** — client_provided (current behavior), system_assisted (system builds evidence register), minimal (creative/instructional). Client no longer needs to manually prepare complete evidence register for factual content when system_assisted mode is used.
+5. **Research mode** — client_provided (legacy — client supplies evidence register), system_assisted (default for new briefs — system researches topic-specific facts using authorized tools), minimal (creative/instructional). A normal client needs only topic + niche + audience + format + duration — no evidence register or subject/object/mechanism fields required.
 6. **Free-text niche** — "true crime" ya "underwater basket weaving" bhi accept hoga
 7. **Creative fields** — characters, setting, premise — fiction ke liye
 8. **Brand voice** — commercial/corporate content ke liye

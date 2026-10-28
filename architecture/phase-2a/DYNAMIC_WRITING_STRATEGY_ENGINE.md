@@ -470,8 +470,8 @@ FOR each CN_rule in CN01-CN07:
     IF CN_rule.condition evaluates TRUE for this brief:
         ACTIVE_RULES += CN_rule  # CN-series: DESIGN TARGET, separate namespace
 
-# STEP 3: Check EXPERIMENTAL techniques
-FOR each X_rule in X01-X08:
+# STEP 3: Check EXPERIMENTAL techniques (canonical X01-X08 + proposed XN01-XN06)
+FOR each X_rule in X01-X08, XN01-XN06:
     IF user explicitly requested OR format strongly benefits:
         ACTIVE_RULES += X_rule  # MUST be labelled EXPERIMENTAL in output
 
@@ -498,21 +498,23 @@ IF content_type == instructional:
 
 ### 8.2 Conditional Rule Trigger Table
 
-| Rule | Condition | When TRUE |
-|---|---|---|
-| C01 | niche == N01 (weather) | Forecast staleness check active |
-| C02 | niche == N02 (military) | OPSEC check active |
-| C03 | niche == N03 (WW history) | Era scope + dignity check |
-| C04 | niche == N04 (disaster) | Casualty/cause attribution rules |
-| C05 | niche == N05 (psychology) | Study citation + replication rules |
-| C06 | content includes statistics | Statistical reporting rules |
-| C07 | content includes quotes | Quote attribution rules |
-| C08 | audience.knowledge_level specified | Reading level adaptation |
-| C09 | content references living persons | Privacy/defamation rules |
-| C10 | content references minors | Child safety rules |
-| C11 | content includes health claims | Medical claim overlay |
-| C12 | content includes financial claims | Financial claim overlay |
-| C13 | content in non-English language | Translation/localization rules |
+| Rule | Canonical Definition | Condition (from `references/writing_rules.md`) | Source |
+|---|---|---|---|
+| C01 | Direct "you" address | Not fiction narration | F-103 |
+| C02 | Present tense default | Instructional content only | F-104 |
+| C03 | Contractions | Spoken delivery, not formal writing | F-111 |
+| C04 | Front-load main point | Informational, not suspense-building | F-112 |
+| C05 | Hook/context/body/climax/CTA | Video with retention goals | F-180, K038, K039 |
+| C06 | Narrate rather than display text | Video/multimedia with narration | F-170, K004, K022 |
+| C07 | Avoid redundant on-screen text with narration | Narrated video | F-172, K004 |
+| C08 | Adjust complexity to audience knowledge | Always, degree varies | F-173, K021, K044 |
+| C09 | Scaffold then fade support | Progressive instruction | F-174, K021 |
+| C10 | Scene/sequel cycles | Fiction or fiction-adjacent format | F-012, K015 |
+| C11 | Try/fail escalation | Fiction with rising action | F-013, K017 |
+| C12 | Voice vs. tone distinction | All formats (caveat: POV) | F-110, K020 |
+| C13 | Semantic unit extraction | Educational video | F-182, K046 |
+
+**Niche-specific and content-sensitive behaviors** (forecast staleness, OPSEC checks, era scope, casualty attribution, study citation, statistical reporting, quote attribution, privacy/defamation, child safety, health/financial claim overlays, localization) are NOT conditional writing rules — they are handled by the **niche adapter system** (per registered niche) and the **HOLD system** (HOLD_MEDICAL_CLAIM, HOLD_FINANCIAL_CLAIM, HOLD_LEGAL_CLAIM, HOLD_CULTURAL_SENSITIVITY, HOLD_HARM — see UNIVERSAL_ARCHITECTURE_BLUEPRINT §6.2). Content analysis triggers these systems automatically; they do not occupy C-series rule IDs.
 | **CN01** | voice_mode == multi_character | Character voice differentiation | **DESIGN TARGET** |
 | **CN02** | platform specified | Platform formatting rules | **DESIGN TARGET** |
 | **CN03** | duration < 5 minutes | Short-form pacing rules | **DESIGN TARGET** |
@@ -525,18 +527,33 @@ IF content_type == instructional:
 
 ### 8.3 Experimental Technique Registry
 
+**Canonical X01-X08** (from `references/writing_rules.md` — preserved as-is):
+
 | Technique | Source | Epistemic Status | Activation |
 |---|---|---|---|
-| X01 | K017 — tension alternation | preliminary | User opt-in or narrative format |
-| X02 | K024 — micro-narrative embedding | preliminary | Long-form + engagement objective |
-| X03 | K038 — cognitive load sequencing | preliminary | Tutorial/explainer format |
-| X04 | K009 — emotional state tracking | preliminary | Narrative/drama format |
-| X05 | K042 — pattern interruption | preliminary | Entertainment/comedy format |
-| X06 | K015 — suspense micro-dosing | preliminary | Mystery/true crime format |
-| X07 | F-023 — gather-point convergence | preliminary | Interactive/branching narrative |
-| X08 | Paradox hook | preliminary | Science/explainer with expert audience |
+| X01 | F-020, K014 — Three-act structure | preliminary | Framework option, user opt-in or narrative format |
+| X02 | F-020 — Save the Cat 15 beats | preliminary | Framework option, user opt-in or narrative format |
+| X03 | F-021 — Hero's Journey | preliminary | Framework option, user opt-in or narrative format |
+| X04 | K017 — Tension/recovery alternation | preliminary | User opt-in or narrative format |
+| X05 | K018 — Payoff obligation | preliminary | User opt-in or narrative format |
+| X06 | K035 — Fair-play clue planting | preliminary | User opt-in or mystery/narrative format |
+| X07 | K011 — Self-recognition framing | preliminary | User opt-in or educational format |
+| X08 | K009 — Lead with paradox | preliminary | Science/explainer with expert audience |
 
-**Har EXPERIMENTAL technique ka output mein label mandatory hai:** `[EXPERIMENTAL: X0N — technique_name]`
+**Proposed XN-series** (Experimental-New — genuinely new techniques not in canonical registry):
+
+| Technique | Source | Epistemic Status | Activation |
+|---|---|---|---|
+| XN01 | K024 — Micro-narrative embedding | proposed | Long-form + engagement objective |
+| XN02 | K038 — Cognitive load sequencing | proposed | Tutorial/explainer format |
+| XN03 | K009 — Emotional state tracking | proposed | Narrative/drama format |
+| XN04 | K042 — Pattern interruption | proposed | Entertainment/comedy format |
+| XN05 | K015 — Suspense micro-dosing | proposed | Mystery/true crime format |
+| XN06 | F-023 — Gather-point convergence | proposed | Interactive/branching narrative |
+
+**Note:** XN-series techniques are architecture proposals, not yet validated by research crosswalk or pilot scripts. They require separate validation before promotion to X-series.
+
+**Har EXPERIMENTAL technique ka output mein label mandatory hai:** `[EXPERIMENTAL: X0N — technique_name]` or `[EXPERIMENTAL: XN0N — technique_name]`
 
 ---
 
@@ -563,7 +580,7 @@ WRITING_PLAN:
     total_words: 4500
     estimated_duration: "30 minutes at 150 wpm"
     active_rules: [U01-U24, C01, C06, C08]
-    experimental_techniques: [X01]
+    experimental_techniques: [X04]
     niche_tier: 1
     niche_adapter: "N01_weather"
     evidence_mode: "mandatory"

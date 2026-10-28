@@ -231,7 +231,16 @@ EVIDENCE ENGINE:
 
 ### 3.4 Research Integration Workflow (Brief-to-Research-to-Script)
 
-**Problem:** Current schema requires clients to manually prepare a complete evidence register. Correction: A client must be able to provide topic, niche, audience, language, format and duration without preparing evidence items.
+**Problem:** Current schema requires clients to manually prepare a complete evidence register. Correction: A client must be able to provide topic, niche, audience, language, format and duration without preparing evidence items. A normal client must NOT need to understand evidence registers or provide subject/object/mechanism fields manually.
+
+**Two Knowledge Sources (MUST NOT be conflated):**
+
+| Knowledge Type | Purpose | Source | Used By |
+|---|---|---|---|
+| **Scriptwriting craft knowledge** | Informs HOW to write | S/F/R/K/V research library (internal) | Strategy Engine — rules, techniques, formats |
+| **Topic-specific factual research** | Provides WHAT to write about | External primary/secondary sources via authorized research tools | Evidence Engine — claims, citations, facts |
+
+The craft library (S/F/R/K/V series) defines writing rules (U01-U24, C01-C13), experimental techniques (X01-X08, XN01-XN06) and format structures. It CANNOT substitute for research about arbitrary client topics. A weather documentary needs meteorological data from NOAA/NWS, not from the S/F/R/K/V writing rules.
 
 **Design — Controlled Research Workflow:**
 
@@ -239,42 +248,57 @@ EVIDENCE ENGINE:
 CLIENT BRIEF (topic, niche, audience, language, format, duration)
     │
     ▼
-┌─────────────────────────────────────────┐
-│  RESEARCH PHASE (when evidence absent)   │
-│                                          │
-│  1. System identifies factual claims     │
-│     needed for the topic + format        │
-│  2. Source lookup from approved registries│
-│     (S/F/R/K/V series — rights-cleared)  │
-│  3. Each claim gets:                     │
-│     a) Source reference (or MISSING tag)  │
-│     b) Epistemic status assignment       │
-│     c) Rights/license check              │
-│  4. MISSING evidence → clearly flagged   │
-│     as [UNRESOURCED] — never fabricated  │
-│  5. Research output = generated evidence │
-│     register for review before writing   │
-└──────────────┬──────────────────────────┘
+┌─────────────────────────────────────────────────────┐
+│  RESEARCH MODE INFERENCE                             │
+│  - Brief includes evidence register → client_provided│
+│  - Brief lacks evidence register → system_assisted   │
+│  - Explicit research_mode field → always overrides   │
+│  - content_type = creative/instructional → minimal   │
+└──────────────┬──────────────────────────────────────┘
                ▼
-┌─────────────────────────────────────────┐
-│  VALIDATION GATE                         │
-│  - Verified sources → proceed            │
-│  - Missing evidence → HOLD_UNVERIFIED    │
-│  - Unassessed sources → HOLD_RIGHTS      │
-│  - NEVER invent citations                │
-│  - NEVER present missing evidence as     │
-│    verified facts                        │
-└──────────────┬──────────────────────────┘
+┌─────────────────────────────────────────────────────┐
+│  RESEARCH PHASE (system_assisted mode)               │
+│                                                      │
+│  1. System identifies factual claims                 │
+│     needed for the topic + format                    │
+│  2. System-assisted research using available          │
+│     authorized research tools (web search,           │
+│     databases, APIs) for topic-specific facts        │
+│  3. Each claim gets:                                 │
+│     a) Source reference with provenance              │
+│        (publisher, author, date) or MISSING tag      │
+│     b) Timestamp/recency check for time-sensitive    │
+│        claims                                        │
+│     c) Epistemic status assignment                   │
+│     d) Rights/license check                          │
+│  4. MISSING evidence → clearly flagged               │
+│     as [UNRESOURCED] — never fabricated              │
+│  5. When access or reliable evidence unavailable →   │
+│     report limitation explicitly, HOLD unsupported   │
+│     claims — never invent citations                  │
+│  6. Research output = generated evidence             │
+│     register for review before writing               │
+└──────────────┬──────────────────────────────────────┘
+               ▼
+┌─────────────────────────────────────────────────────┐
+│  VALIDATION GATE                                     │
+│  - Verified sources with provenance → proceed        │
+│  - Missing evidence → HOLD_UNVERIFIED_FACT           │
+│  - Unassessed sources → HOLD_RIGHTS                  │
+│  - Undated time-sensitive sources → WARNING           │
+│  - NEVER invent citations                            │
+│  - NEVER present missing evidence as verified facts  │
+└──────────────┬──────────────────────────────────────┘
                ▼
          GENERATION PHASE
 ```
 
 **Research modes:**
-- `client_provided` — client supplies evidence register (current behavior, unchanged)
-- `system_assisted` — system builds evidence register from approved sources, client reviews before generation
+- `client_provided` — client supplies evidence register (legacy behavior, preserved for backward compatibility)
+- `system_assisted` — system researches topic-specific facts using available authorized research tools, builds evidence register with source provenance and factual verification, client reviews before generation. **Default for NEW briefs without evidence register.**
 - `minimal` — creative/instructional content, no formal evidence register needed
 
-**CRITICAL:** System-assisted research ONLY uses sources from the approved source registry. It never fabricates citations, never invents sources, and clearly distinguishes missing evidence (`[UNRESOURCED]`) from verified facts. Any system-generated evidence register must be reviewable before script generation proceeds.
+**CRITICAL:** System-assisted research uses available authorized research tools for topic-specific factual research. It never fabricates citations, never invents sources, and clearly distinguishes missing evidence (`[UNRESOURCED]`) from verified facts. When reliable evidence is unavailable, the system reports the limitation and triggers HOLD for unsupported claims. Any system-generated evidence register must be reviewable before script generation proceeds. The S/F/R/K/V craft research library is used by the Strategy Engine for writing methodology — it is NOT a source for topic-specific facts.
 
 ### 3.5 Source Rights Module
 
@@ -724,9 +748,17 @@ Worker E proposed A00-A10 architecture. Yeh blueprint us se COMPATIBLE hai:
 - Documentary ±5% spoken narration word-budget tolerance (preserved)
 - Test infrastructure pattern (85 integration + 37 prototype = 122 core tests, plus 12 invocation-pipeline checks separately categorized)
 
+**Validation Type Distinction:**
+- **Technical prototype validation** (automated): 85 integration + 37 prototype = 122 core tests + 12 invocation-pipeline checks (separately categorized) verify code correctness, schema compliance, rule activation, pipeline integrity and regression safety. These confirm the system WORKS correctly.
+- **Professional writing quality validation** (human expert): Assessment that actual script output meets professional scriptwriting standards — narrative coherence, voice consistency, audience engagement, craft quality. These confirm the system WRITES well. Required before any production release claim.
+
+Passing all automated tests validates technical prototype correctness. It does NOT validate professional writing quality. Both validation types are required before any production release.
+
 **DESIGN TARGET Declarations:**
 - Backward compatibility (current N01-N05 briefs unchanged) → **DESIGN TARGET** until executed regression tests establish it
 - Format coverage (14 format registry entries) → **DESIGN TARGET** until end-to-end pilot scripts per format validate it
 - Language coverage (multi-language support) → **DESIGN TARGET** until non-English pilot scripts validate it
+- Non-documentary formats (EXPLAINER through CUSTOM) → **DESIGN TARGET** until per-format pilot scripts and expert review validate them
+- Multilingual capabilities → **DESIGN TARGET** until non-English pilot scripts validate them
 
 **Phase 2A DESIGN ONLY — koi code implement nahi kiya gaya.**
