@@ -10,6 +10,7 @@
 
 import { readFileSync } from "node:fs";
 import { resolveNiche, isRegisteredNiche, registerNiche, isBuiltinNiche } from "./niche_resolver.mjs";
+import { resolveFormat, getFormatDefinition, isRegisteredFormat, FORMAT_STATUS } from "./format_registry.mjs";
 
 const REGISTERED_NICHES = new Set(["N01", "N02", "N03", "N04", "N05"]);
 const BLOCKED_SOURCES = new Set(["F-190", "R052"]);
@@ -35,6 +36,7 @@ const HOLD_TYPES = {
 };
 
 export { resolveNiche, isRegisteredNiche, registerNiche, isBuiltinNiche } from "./niche_resolver.mjs";
+export { resolveFormat, getFormatDefinition, isRegisteredFormat, FORMAT_STATUS } from "./format_registry.mjs";
 
 export function validateInput(input) {
   const holds = [];
@@ -63,8 +65,22 @@ export function validateInput(input) {
     }
   }
 
+  // M2: Format resolution — legacy briefs default to documentary
+  const formatResult = resolveFormat(input);
+  if (formatResult.hold) {
+    holds.push({ type: formatResult.hold.type, detail: formatResult.hold.message });
+  }
+  if (formatResult.warning) {
+    warnings.push(formatResult.warning.message);
+  }
+  const resolvedFormat = formatResult.resolved;
+
+  // Word target: use format-specific range when available
   const target = input.target_words || 3000;
-  if (target < 2500 || target > 8000) {
+  const fmtRange = resolvedFormat ? resolvedFormat.word_range : null;
+  if (fmtRange && (target < fmtRange.min || target > fmtRange.max)) {
+    warnings.push(`Target word count ${target} outside ${resolvedFormat.id} range ${fmtRange.min}-${fmtRange.max}`);
+  } else if (!fmtRange && (target < 2500 || target > 8000)) {
     warnings.push(`Target word count ${target} outside recommended range 2500-8000`);
   }
 
@@ -229,8 +245,18 @@ export function validateInput(input) {
     warnings,
     evidence_register,
     niche_resolution: nicheResolution || null,
+    format_resolution: resolvedFormat ? {
+      id: resolvedFormat.id,
+      name: resolvedFormat.name,
+      status: resolvedFormat.status,
+      arc_id: resolvedFormat.arc.id,
+      section_count: resolvedFormat.arc.sections.length,
+      evidence_requirement: resolvedFormat.evidence_requirement,
+      spoken_word_budget_tolerance: resolvedFormat.spoken_word_budget_tolerance,
+    } : null,
     stages: {
       topic_intake: missing.length === 0 ? "PASS" : "HOLD",
+      format_resolution: holds.filter(h => h.type === "HOLD_FORMAT_MISMATCH").length === 0 ? "PASS" : "HOLD",
       evidence_validation: holds.filter(h => [HOLD_TYPES.SOURCE_ROLE, HOLD_TYPES.DISPUTED_PROVENANCE, HOLD_TYPES.UNVERIFIED_FACT, HOLD_TYPES.RIGHTS].includes(h.type)).length === 0 ? "PASS" : "HOLD",
       niche_check: holds.filter(h => [HOLD_TYPES.STALE_FORECAST, HOLD_TYPES.HARM, HOLD_TYPES.REVIEW].includes(h.type)).length === 0 ? "PASS" : "HOLD",
       title_check: holds.filter(h => h.type === HOLD_TYPES.TITLE_PREMISE).length === 0 ? "PASS" : "HOLD",
@@ -243,7 +269,7 @@ export function countWords(text) {
   return text.split(/\s+/).filter(w => w.length > 0).length;
 }
 
-export function analyzeScript(scriptText, input) {
+export function analyzeScript(scriptText, input, options = {}) {
   const lines = scriptText.split("\n");
   const sections = [];
   let currentSection = null;
@@ -363,7 +389,9 @@ export function analyzeScript(scriptText, input) {
     target_words: input.target_words || 3000,
     word_budget_status: (() => {
       const tgt = input.target_words || 3000;
-      return spokenNarrationWords >= Math.floor(tgt * 0.95) && spokenNarrationWords <= Math.ceil(tgt * 1.05) ? "PASS" : "REVIEW";
+      const fmt = options.format || getFormatDefinition(input.format || 'documentary');
+      const tolerance = fmt ? fmt.spoken_word_budget_tolerance : 0.05;
+      return spokenNarrationWords >= Math.floor(tgt * (1 - tolerance)) && spokenNarrationWords <= Math.ceil(tgt * (1 + tolerance)) ? "PASS" : "REVIEW";
     })(),
     evidence_referenced: referencedIds,
     evidence_unreferenced: unreferencedIds,
