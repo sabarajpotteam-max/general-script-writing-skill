@@ -9,6 +9,7 @@ import {
   resolveNiche,
   isRegisteredNiche,
   registerNiche,
+  isBuiltinNiche,
   validateInput
 } from "../scripts/validate.mjs";
 
@@ -373,6 +374,162 @@ test("M1-050", "Niche resolution result included in validation output", () => {
   return r.niche_resolution !== null && r.niche_resolution.tier === 1;
 });
 
+// ============================================================
+// M1.1 REGRESSION TESTS (M1-051 through M1-060)
+// ============================================================
+
+// === M1.1-R1: Prevent N01 override ===
+
+test("M1-051", "registerNiche rejects overwrite of builtin N01", () => {
+  try {
+    registerNiche("N01", { domain: "Fake Weather", policies: [] });
+    return false;
+  } catch (e) {
+    return e.message.includes("Cannot overwrite builtin niche N01");
+  }
+});
+
+test("M1-052", "isBuiltinNiche returns true for N01-N05", () => {
+  return isBuiltinNiche("N01") && isBuiltinNiche("N02") &&
+         isBuiltinNiche("N03") && isBuiltinNiche("N04") &&
+         isBuiltinNiche("N05");
+});
+
+// === M1.1-R2: Prevent registered niche overwrite ===
+
+test("M1-053", "registerNiche rejects overwrite of already-registered N06", () => {
+  try {
+    registerNiche("N06", { domain: "Duplicate Space", policies: [] });
+    return false;
+  } catch (e) {
+    return e.message.includes("already registered");
+  }
+});
+
+// === M1.1-R3: High-stakes custom N07 ===
+
+test("M1-054", "Custom niche with medical domain is high-stakes", () => {
+  registerNiche("N07", {
+    domain: "Medical Device Reviews",
+    key_concern: "Clinical safety claims",
+    policies: ["Verify FDA clearance status"],
+    safeguards: ["HOLD_HARM"]
+  });
+  const r = resolveNiche("N07");
+  return r.high_stakes === true && r.requires_review === true;
+});
+
+test("M1-055", "High-stakes custom niche triggers HOLD_REVIEW in validation", () => {
+  const input = { ...baseInput, niche: "N07" };
+  const r = validateInput(input);
+  return r.holds.some(h => h.type === "HOLD_REVIEW" && h.detail.includes("High-stakes"));
+});
+
+// === M1.1-R4: Cryptocurrency classification ===
+
+test("M1-056", "Cryptocurrency niche is flagged as high-stakes", () => {
+  const r = resolveNiche("cryptocurrency trading strategies");
+  return r.high_stakes === true && r.safeguards.includes("HOLD_REVIEW");
+});
+
+test("M1-057", "Blockchain DeFi niche is flagged as high-stakes", () => {
+  const r = resolveNiche("blockchain defi protocols explained");
+  return r.high_stakes === true;
+});
+
+// === M1.1-R5: Medical and finance domain overlap ===
+
+test("M1-058", "Health insurance overlap detects both domains and is high-stakes", () => {
+  const r = resolveNiche("health insurance coverage explained");
+  return r.high_stakes === true && r.overlapping_domains.includes("health");
+});
+
+// === M1.1-R6: Low-risk unknown niche still accepted ===
+
+test("M1-059", "Gardening tutorial is low-risk Tier 3", () => {
+  const r = resolveNiche("gardening tutorials for beginners");
+  return r.tier === 3 && r.high_stakes === false && r.validation.valid === true;
+});
+
+// === M1.1-R7: Missing/malformed adapter schema validation ===
+
+test("M1-060", "registerNiche rejects config without domain string", () => {
+  try {
+    registerNiche("N08", { policies: ["test"] });
+    return false;
+  } catch (e) {
+    return e.message.includes("'domain' string");
+  }
+});
+
+test("M1-061", "registerNiche rejects invalid safeguard value", () => {
+  try {
+    registerNiche("N09", { domain: "Test", safeguards: ["FAKE_HOLD"] });
+    return false;
+  } catch (e) {
+    return e.message.includes("Unknown safeguard");
+  }
+});
+
+// === M1.1-R8: File-backed persistence ===
+
+test("M1-062", "Builtin N01-N05 loaded from adapter files on init", () => {
+  return isRegisteredNiche("N01") && isRegisteredNiche("N02") &&
+         isRegisteredNiche("N03") && isRegisteredNiche("N04") &&
+         isRegisteredNiche("N05") &&
+         isBuiltinNiche("N01") && isBuiltinNiche("N05");
+});
+
+// === M1.1-R9: Universal safeguards cannot be removed ===
+
+test("M1-063", "Custom niche always includes UNIVERSAL safeguards", () => {
+  registerNiche("N10", {
+    domain: "Pottery Making",
+    policies: ["Verify kiln temperatures"],
+    safeguards: []
+  });
+  const r = resolveNiche("N10");
+  return r.safeguards.includes("HOLD_HARM") &&
+         r.safeguards.includes("HOLD_UNVERIFIED_FACT") &&
+         r.safeguards.includes("HOLD_SOURCE_ROLE") &&
+         r.safeguards.includes("HOLD_DISPUTED_PROVENANCE") &&
+         r.safeguards.includes("HOLD_TITLE_PREMISE") &&
+         r.safeguards.includes("HOLD_NEEDS_RECHECK") &&
+         r.safeguards.includes("HOLD_REVIEW");
+});
+
+test("M1-064", "Custom niche with empty safeguards still gets HOLD_REVIEW", () => {
+  const r = resolveNiche("N10");
+  return r.requires_review === true && r.safeguards.includes("HOLD_REVIEW");
+});
+
+// === M1.1-R10: Old niche-specific behavior unchanged ===
+
+test("M1-065", "N01 builtin adapter unchanged after M1.1 hardening", () => {
+  const r = resolveNiche("N01");
+  return r.tier === 1 && r.high_stakes === false && r.requires_review === false &&
+         r.safeguards.includes("HOLD_STALE_FORECAST") &&
+         r.policies.some(p => p.includes("issuing agency"));
+});
+
+test("M1-066", "N03 builtin era validation unchanged after M1.1", () => {
+  const input = { ...baseInput, niche: "N03", niche_context: { era_start: 1992, era_end: 1995 } };
+  const r = validateInput(input);
+  return r.holds.some(h => h.type === "HOLD_HARM" && h.detail.includes("outside scope"));
+});
+
+test("M1-067", "N04 synthetic video check unchanged after M1.1", () => {
+  const input = { ...baseInput, niche: "N04", niche_context: { synthetic_video_claimed_authentic: true } };
+  const r = validateInput(input);
+  return r.holds.some(h => h.type === "HOLD_HARM");
+});
+
+test("M1-068", "Custom low-risk niche still produces HOLD_REVIEW in validation", () => {
+  const input = { ...baseInput, niche: "N10" };
+  const r = validateInput(input);
+  return r.holds.some(h => h.type === "HOLD_REVIEW" && h.detail.includes("Custom niche"));
+});
+
 // === Print results ===
 const total = passed + failed;
 console.log(`\n=== M1 Niche Resolver Test Results ===`);
@@ -390,7 +547,7 @@ const receipt = {
   passed,
   failed,
   results,
-  disclaimer: "M1 phase tests for dynamic niche resolution. RESEARCH_ONLY."
+  disclaimer: "M1 + M1.1 phase tests for dynamic niche resolution. RESEARCH_ONLY."
 };
 
 writeFileSync(

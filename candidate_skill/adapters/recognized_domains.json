@@ -1,0 +1,124 @@
+[
+  {
+    "key": "science",
+    "domain": "Science",
+    "aliases": ["scientific", "research", "laboratory", "experiment"],
+    "policies": [
+      "Cite primary sources with author, year, journal, sample size",
+      "State replication status for key findings",
+      "Distinguish correlation from causation",
+      "Qualify effect sizes when available",
+      "Note sample population limitations"
+    ],
+    "extra_safeguards": [],
+    "high_stakes": false
+  },
+  {
+    "key": "history",
+    "domain": "History",
+    "aliases": ["historical", "archival", "heritage"],
+    "policies": [
+      "Verify dates and locations against multiple sources",
+      "Every historical quote must trace to a documented source",
+      "Translations must preserve qualifiers",
+      "Distinguish primary from secondary sources",
+      "Note historiographical debates where relevant"
+    ],
+    "extra_safeguards": ["HOLD_HARM"],
+    "high_stakes": false
+  },
+  {
+    "key": "technology",
+    "domain": "Technology",
+    "aliases": ["tech", "technological", "computing", "software", "hardware"],
+    "policies": [
+      "Verify operational vs development status for technology claims",
+      "Single-party claims must be attributed, not stated as fact",
+      "Performance specifications require source and conditions",
+      "Distinguish announced from shipping products"
+    ],
+    "extra_safeguards": [],
+    "high_stakes": false
+  },
+  {
+    "key": "health",
+    "domain": "Health",
+    "aliases": ["healthcare", "wellness", "patient care", "clinical care"],
+    "policies": [
+      "Clinical evidence standards required for health claims",
+      "Distinguish FDA-approved from experimental treatments",
+      "Effect sizes and confidence intervals required for clinical claims",
+      "Note population-specific limitations of studies",
+      "Do not present preliminary findings as medical advice"
+    ],
+    "extra_safeguards": ["HOLD_HARM", "HOLD_REVIEW"],
+    "high_stakes": true
+  },
+  {
+    "key": "finance",
+    "domain": "Finance",
+    "aliases": ["banking", "monetary", "economic", "fiscal"],
+    "policies": [
+      "All projections must include disclaimers and uncertainty qualifiers",
+      "Past performance disclaimers required for investment claims",
+      "Distinguish analysis from financial advice",
+      "Market data must include source and timestamp",
+      "Risk factors must be disclosed alongside opportunity claims"
+    ],
+    "extra_safeguards": ["HOLD_REVIEW"],
+    "high_stakes": true
+  },
+  {
+    "key": "education",
+    "domain": "Education",
+    "aliases": ["educational", "academic", "pedagogy", "teaching", "curriculum"],
+    "policies": [
+      "Pedagogical claims must cite evidence base",
+      "Adjust complexity to stated audience level",
+      "Distinguish established findings from emerging research",
+      "Note WEIRD sample limitations if claiming broad applicability"
+    ],
+    "extra_safeguards": [],
+    "high_stakes": false
+  },
+  {
+    "key": "sports",
+    "domain": "Sports",
+    "aliases": ["athletic", "athletics", "sporting", "competition"],
+    "policies": [
+      "Statistics must include source and season/date",
+      "Performance claims must cite measurable data",
+      "Distinguish official records from estimates",
+      "Historical claims require documented sources"
+    ],
+    "extra_safeguards": [],
+    "high_stakes": false
+  },
+  {
+    "key": "real_estate",
+    "domain": "Real Estate",
+    "aliases": ["property", "housing", "realty"],
+    "policies": [
+      "Market data must include source, geography, and date",
+      "Projections must include uncertainty qualifiers",
+      "Distinguish listing claims from verified data",
+      "Price history requires documented source"
+    ],
+    "extra_safeguards": ["HOLD_REVIEW"],
+    "high_stakes": false
+  },
+  {
+    "key": "engineering",
+    "domain": "Engineering",
+    "aliases": ["mechanical", "civil engineering", "electrical", "structural", "aerospace"],
+    "policies": [
+      "Specifications must include source and conditions",
+      "Safety-critical claims require multiple independent sources",
+      "Distinguish theoretical from tested performance",
+      "Material properties must cite standards or test reports",
+      "Failure modes must be disclosed for safety-critical systems"
+    ],
+    "extra_safeguards": ["HOLD_HARM"],
+    "high_stakes": false
+  }
+]

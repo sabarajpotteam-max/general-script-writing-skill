@@ -9,7 +9,7 @@
  */
 
 import { readFileSync } from "node:fs";
-import { resolveNiche, isRegisteredNiche, registerNiche } from "./niche_resolver.mjs";
+import { resolveNiche, isRegisteredNiche, registerNiche, isBuiltinNiche } from "./niche_resolver.mjs";
 
 const REGISTERED_NICHES = new Set(["N01", "N02", "N03", "N04", "N05"]);
 const BLOCKED_SOURCES = new Set(["F-190", "R052"]);
@@ -34,7 +34,7 @@ const HOLD_TYPES = {
   NEEDS_RECHECK: "HOLD_NEEDS_RECHECK"
 };
 
-export { resolveNiche, isRegisteredNiche, registerNiche } from "./niche_resolver.mjs";
+export { resolveNiche, isRegisteredNiche, registerNiche, isBuiltinNiche } from "./niche_resolver.mjs";
 
 export function validateInput(input) {
   const holds = [];
@@ -57,6 +57,9 @@ export function validateInput(input) {
     }
     if (nicheResolution.high_stakes) {
       holds.push({ type: HOLD_TYPES.REVIEW, detail: `High-stakes niche "${input.niche}" flagged for review — domain involves elevated risk` });
+    }
+    if (nicheResolution.requires_review && !nicheResolution.high_stakes) {
+      holds.push({ type: HOLD_TYPES.REVIEW, detail: `Custom niche "${input.niche}" requires review — custom adapters must be verified before production use` });
     }
   }
 

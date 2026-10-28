@@ -1,8 +1,8 @@
 {
-  "executed_at": "2026-10-28T13:54:43.479Z",
+  "executed_at": "2026-10-28T14:11:54.986Z",
   "suite": "m1_niche_resolver",
-  "total": 50,
-  "passed": 50,
+  "total": 68,
+  "passed": 68,
   "failed": 0,
   "results": [
     {
@@ -254,7 +254,97 @@
       "id": "M1-050",
       "description": "Niche resolution result included in validation output",
       "result": "PASS"
+    },
+    {
+      "id": "M1-051",
+      "description": "registerNiche rejects overwrite of builtin N01",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-052",
+      "description": "isBuiltinNiche returns true for N01-N05",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-053",
+      "description": "registerNiche rejects overwrite of already-registered N06",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-054",
+      "description": "Custom niche with medical domain is high-stakes",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-055",
+      "description": "High-stakes custom niche triggers HOLD_REVIEW in validation",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-056",
+      "description": "Cryptocurrency niche is flagged as high-stakes",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-057",
+      "description": "Blockchain DeFi niche is flagged as high-stakes",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-058",
+      "description": "Health insurance overlap detects both domains and is high-stakes",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-059",
+      "description": "Gardening tutorial is low-risk Tier 3",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-060",
+      "description": "registerNiche rejects config without domain string",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-061",
+      "description": "registerNiche rejects invalid safeguard value",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-062",
+      "description": "Builtin N01-N05 loaded from adapter files on init",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-063",
+      "description": "Custom niche always includes UNIVERSAL safeguards",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-064",
+      "description": "Custom niche with empty safeguards still gets HOLD_REVIEW",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-065",
+      "description": "N01 builtin adapter unchanged after M1.1 hardening",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-066",
+      "description": "N03 builtin era validation unchanged after M1.1",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-067",
+      "description": "N04 synthetic video check unchanged after M1.1",
+      "result": "PASS"
+    },
+    {
+      "id": "M1-068",
+      "description": "Custom low-risk niche still produces HOLD_REVIEW in validation",
+      "result": "PASS"
     }
   ],
-  "disclaimer": "M1 phase tests for dynamic niche resolution. RESEARCH_ONLY."
+  "disclaimer": "M1 + M1.1 phase tests for dynamic niche resolution. RESEARCH_ONLY."
 }

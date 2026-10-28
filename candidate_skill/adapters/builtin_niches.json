@@ -1,0 +1,79 @@
+[
+  {
+    "code": "N01",
+    "domain": "USA Weather / Forecasting",
+    "key_concern": "Forecast staleness, official warning attribution",
+    "policies": [
+      "Name issuing agency and issue time for every forecast",
+      "Flag forecasts with validity window <= 1 hour as potentially stale",
+      "Label projections as 'official warning' only with agency verification",
+      "Historical weather events may use expired data IF marked historical",
+      "Do not present model outputs as confirmed events"
+    ],
+    "extra_safeguards": ["HOLD_STALE_FORECAST"],
+    "requires_context": ["issued_at", "valid_until", "reference_time"],
+    "validator": "N01"
+  },
+  {
+    "code": "N02",
+    "domain": "Military / Aviation",
+    "key_concern": "Operational status claims, technology stage",
+    "policies": [
+      "Verify deployment stage for 'operational' claims",
+      "'Contracted' or 'development' != 'operational'",
+      "Single-party claims must be attributed, not stated as fact",
+      "Performance specifications require source and conditions",
+      "Do not present classified information as public knowledge"
+    ],
+    "extra_safeguards": ["HOLD_RIGHTS"],
+    "requires_context": [],
+    "validator": "N02"
+  },
+  {
+    "code": "N03",
+    "domain": "German WW1/WW2 Human Stories",
+    "key_concern": "Quote authenticity, translation qualifiers, archival integrity",
+    "policies": [
+      "Story era must overlap WW1 (1914-1918) or WW2 (1939-1945)",
+      "era_start and era_end required in niche_context",
+      "Every historical quote must trace to a documented source",
+      "Translations must preserve qualifiers",
+      "Reenacted footage must never be labelled as archival",
+      "Survivor testimony must not be dramatized beyond the record"
+    ],
+    "extra_safeguards": ["HOLD_HARM", "HOLD_REVIEW"],
+    "requires_context": ["era_start", "era_end"],
+    "validator": "N03"
+  },
+  {
+    "code": "N04",
+    "domain": "Disaster News",
+    "key_concern": "Casualty figure provisionality, synthetic media disclosure",
+    "policies": [
+      "Synthetic/AI video as authentic triggers immediate HOLD",
+      "Provisional casualties must be labelled 'provisional' or 'estimated'",
+      "Single-cause attribution requires study citation",
+      "Use 'contributing factor' when causation is uncertain",
+      "Ongoing situations need 'as of [date/time]' qualifiers"
+    ],
+    "extra_safeguards": ["HOLD_HARM", "HOLD_REVIEW"],
+    "requires_context": [],
+    "validator": "N04"
+  },
+  {
+    "code": "N05",
+    "domain": "Psychology / Explainers (General)",
+    "key_concern": "Study citations, effect size qualifiers, replication status",
+    "policies": [
+      "Study citations: author, year, institution, sample size, finding",
+      "Qualify effect sizes: small/moderate/large with numbers when available",
+      "State replication status explicitly",
+      "Note WEIRD sample limitations if claiming broad applicability",
+      "Correlation != causation: state design type",
+      "Do not present a small effect (d < 0.2) as transformative"
+    ],
+    "extra_safeguards": ["HOLD_TITLE_PREMISE"],
+    "requires_context": [],
+    "validator": "N05"
+  }
+]
