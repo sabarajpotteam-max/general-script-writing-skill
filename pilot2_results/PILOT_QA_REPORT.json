@@ -1,0 +1,55 @@
+{
+  "sections": [
+    {
+      "section": "HOOK: Das Lied im Keller",
+      "words": 322
+    },
+    {
+      "section": "DAS PROBLEM: Der Klang der Auslöschung",
+      "words": 408
+    },
+    {
+      "section": "DIE ENTDECKUNG: Partituren im Quervergleich",
+      "words": 495
+    },
+    {
+      "section": "DER MECHANISMUS: Nächtliche Proben im verborgenen Kellerraum",
+      "words": 478
+    },
+    {
+      "section": "DIE HERAUSFORDERUNG: Was wir nicht wissen können",
+      "words": 401
+    },
+    {
+      "section": "DIE AUFLÖSUNG: Musik als Widerstand",
+      "words": 472
+    },
+    {
+      "section": "IMPLIKATIONEN: Was die Partituren heute bedeuten",
+      "words": 333
+    },
+    {
+      "section": "OUTRO: Die letzte Partitur",
+      "words": 236
+    }
+  ],
+  "total_words": 3145,
+  "spoken_narration_words": 2852,
+  "target_words": 3000,
+  "word_budget_status": "PASS",
+  "evidence_referenced": [
+    "E-401",
+    "E-402",
+    "E-403",
+    "E-404",
+    "E-405"
+  ],
+  "evidence_unreferenced": [],
+  "evidence_traceability": "PASS",
+  "subject_consistency": "PASS",
+  "object_consistency": "PASS",
+  "epistemic_upgrades": [],
+  "epistemic_integrity": "PASS",
+  "input_validation": "PASS",
+  "input_holds": []
+}
