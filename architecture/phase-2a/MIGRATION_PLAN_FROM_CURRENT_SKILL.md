@@ -46,12 +46,12 @@ HARDCODED CONSTRAINTS:
 | Component | Quality | Migration Strategy |
 |---|---|---|
 | 24 UNIVERSAL rules (U01-U24) | Excellent | RETAIN as-is, add format-conditional modifications |
-| 13 CONDITIONAL rules (C01-C13) | Good | RETAIN + extend to C14-C20 |
+| 13 CONDITIONAL rules (C01-C13) | Good | RETAIN as-is; new rules use separate CN-series namespace (CN01-CN07) |
 | 8 EXPERIMENTAL techniques (X01-X08) | Documented | RETAIN with labelling requirement |
 | Epistemic status system (6 levels) | World-class | RETAIN as-is |
 | Blocked/quarantined enforcement | Rigorous | RETAIN as-is |
 | Source type weight hierarchy | Professional | RETAIN as-is |
-| HOLD condition system (12 types) | Strong | RETAIN + extend to 18 types |
+| HOLD condition system (12 types) | Strong | RETAIN all 12 existing (including HOLD_ORIGINAL_MISSING + HOLD_SOURCE_ROLE) + extend with 8 new = 20 total |
 | QA report structure | Comprehensive | RETAIN + generalize |
 | Test infrastructure (122 core + 12 invocation-pipeline) | Solid | RETAIN + extend |
 | Niche adapter CONCEPT | Proven | RETAIN concept, change implementation (dynamic loading) |
@@ -182,9 +182,9 @@ M2.8  Add tests for:
 ### PHASE M3: Evidence-Optional Mode
 **Risk: MEDIUM | Duration estimate: 1-2 weeks**
 
-**Current state:** Evidence list required in every brief. No fiction/creative support.
+**Current state:** Evidence list required in every brief. No fiction/creative support. No system-assisted research.
 
-**Target state:** Content type classification (factual/creative/hybrid/instructional), evidence conditional.
+**Target state:** Content type classification (factual/creative/hybrid/instructional), evidence conditional. Brief-to-Research-to-Script workflow for system-assisted evidence gathering.
 
 **Steps:**
 ```
@@ -205,27 +205,42 @@ M3.4  Modify SKILL.md evidence citation requirement:
         - [E-XXX] mandatory for factual claims in factual/hybrid mode
         - Optional for instructional mode
         - Not applicable for creative mode
-M3.5  Add creative content fields to schema:
+M3.5  Add research_mode field to schema:
+        - Values: client_provided | system_assisted | minimal
+        - Default: client_provided (backward compat — current behavior)
+        - system_assisted: system builds evidence register from approved sources
+          (S/F/R/K/V series), client reviews before generation
+        - Validation: system_assisted NEVER fabricates citations,
+          NEVER presents missing evidence as verified, flags gaps as [UNRESOURCED]
+        - See UNIVERSAL_ARCHITECTURE_BLUEPRINT §3.4 for full workflow design
+M3.6  Add creative content fields to schema:
         - characters (optional, for creative/hybrid)
         - setting (optional, for creative/hybrid)
         - premise (optional, for creative)
-M3.6  Modify writing rules activation:
+M3.7  Modify writing rules activation:
         - U08 (traceability) → conditional on content_type
         - U10 (no fabrication) → "no fabrication of evidence" for factual;
           "no presenting fiction as fact" for creative
         - U22 (no fabricated dialogue) → factual only
-M3.7  Add tests for:
+M3.8  Add tests for:
         - Factual mode unchanged (regression)
         - Creative brief without evidence accepted
         - Hybrid brief validates factual claims only
         - Fiction frame check catches real claims as fact
         - U08/U10/U22 conditional activation
+        - research_mode=client_provided preserves current behavior (regression)
+        - research_mode=system_assisted builds evidence register from approved sources
+        - system_assisted mode never fabricates citations
+        - Missing evidence flagged as [UNRESOURCED]
+        - Documentary ±5% spoken narration word-budget tolerance regression test
 ```
 
 **Backward compatibility guarantee:**
 - Brief without `content_type` + with evidence list → inferred as "factual" → UNCHANGED
+- Brief without `research_mode` → defaults to "client_provided" → UNCHANGED (current behavior)
 - Documentary format always infers "factual"
-- Evidence validation severity unchanged for factual mode
+- Evidence validation severity unchanged for factual mode with client_provided research_mode
+- Documentary ±5% spoken narration word-budget tolerance PRESERVED in QA regression tests
 
 **Rollback:** Revert schema + validate.mjs + SKILL.md evidence changes.
 
@@ -341,7 +356,7 @@ M7.5  Add tests for:
 ```
 M8.1  End-to-end testing: 1 brief per format through full pipeline
 M8.2  Regression suite: all 122 core + 12 invocation-pipeline tests pass
-M8.3  New format validation: at least 1 pilot script per new format
+M8.3  New format validation: at least 1 pilot script per new format (all non-documentary formats remain DESIGN TARGETS until validated)
 M8.4  Niche scaling test: 1 Tier 1, 1 Tier 2, 1 Tier 3 niche through pipeline
 M8.5  Multi-language test: 1 non-English script through pipeline
 M8.6  Performance check: pipeline completes within reasonable time
@@ -627,13 +642,17 @@ ONGOING (parallel with M1-M8):
 
 ### 12.2 Kya NAHI Badlega
 1. Existing 24 UNIVERSAL rules (U01-U24)
-2. 6-level epistemic status system
-3. Blocked/quarantined enforcement
-4. Source type weight hierarchy
-5. HOLD condition system (extended, not replaced)
-6. Current 5 niche adapters (N01-N05) — refactored to files, not removed
-7. 122 core tests + 12 invocation-pipeline checks (separately categorized)
-8. Documentary workflow for existing briefs
+2. Existing 13 CONDITIONAL rules (C01-C13) — IDs, definitions, provenance and approval states PRESERVED. New rules use CN-series namespace (CN01-CN07).
+3. Existing 8 EXPERIMENTAL techniques (X01-X08) — preserved as-is
+4. 6-level epistemic status system
+5. Blocked/quarantined enforcement
+6. Source type weight hierarchy
+7. All 12 existing HOLD types (including HOLD_ORIGINAL_MISSING and HOLD_SOURCE_ROLE) — extended with 8 new, not replaced. Total: 20.
+8. Current 5 niche adapters (N01-N05) — refactored to files, not removed
+9. 122 core tests + 12 invocation-pipeline checks (separately categorized)
+10. Documentary workflow for existing briefs
+11. **Documentary ±5% spoken narration word-budget tolerance** — existing regression requirement PRESERVED
+12. Existing forecast validation (N01) and historical scope checks (N03)
 
 ### 12.3 Timeline
 - **Structural migration (M1-M8): ~9 weeks**

@@ -125,7 +125,7 @@ IF format = short_form → inferred from objectives:
 | podcast_solo | any | standard | **Segment Arc** |
 | podcast_interview | any | any | **Interview Arc** |
 | short_form | any | < 60s | **Micro Hook-Punch** |
-| short_form | any | 60s-5 min | **Hook-Body-CTA** |
+| short_form | any | 60s-3 min | **Hook-Body-CTA** (platform-dependent: YouTube Shorts ≤ 3 min) |
 | screenplay | creative | any | **Industry Act Structure** |
 | news | factual | any | **Inverted Pyramid** |
 | commercial | hybrid | 15-60s | **Problem-Solution-CTA** |
@@ -157,7 +157,7 @@ evidence: mandatory
 voice: single_narrator (default)
 ```
 
-**CONCEPT PROGRESSION ARC** (explainer):
+**CONCEPT PROGRESSION ARC** (explainer) — **DESIGN TARGET:**
 ```
 sections:
   hook:          10-15%  | Why this matters / surprising fact
@@ -171,7 +171,7 @@ evidence: preferred
 voice: conversational (default)
 ```
 
-**THREE-ACT STRUCTURE** (narrative):
+**THREE-ACT STRUCTURE** (narrative) — **DESIGN TARGET:**
 ```
 sections:
   act1_setup:     25%   | World, characters, inciting incident
@@ -185,7 +185,7 @@ evidence: optional
 voice: per character (default multi)
 ```
 
-**HOOK-BODY-CTA** (short form):
+**HOOK-BODY-CTA** (short form) — **DESIGN TARGET:**
 ```
 sections:
   hook:    15-25%  | Immediate attention grab (first 3 seconds)
@@ -196,7 +196,7 @@ voice: direct_address (default)
 word_range: 50-800
 ```
 
-**SEGMENT ARC** (podcast solo):
+**SEGMENT ARC** (podcast solo) — **DESIGN TARGET:**
 ```
 sections:
   intro:      8-12%   | Show open, episode topic, preview
@@ -210,7 +210,7 @@ evidence: content_type dependent
 voice: conversational_host (default)
 ```
 
-**INTERVIEW ARC** (podcast interview):
+**INTERVIEW ARC** (podcast interview) — **DESIGN TARGET:**
 ```
 sections:
   intro:          10-15%  | Host introduces guest, topic
@@ -223,7 +223,7 @@ evidence: contextual (guest claims may need verification)
 voice: host_guest
 ```
 
-**INVERTED PYRAMID** (news):
+**INVERTED PYRAMID** (news) — **DESIGN TARGET:**
 ```
 sections:
   lead:        15-20%  | Who, what, when, where, why (most important)
@@ -235,7 +235,7 @@ evidence: mandatory
 voice: anchor (default)
 ```
 
-**PROBLEM-SOLUTION-CTA** (commercial):
+**PROBLEM-SOLUTION-CTA** (commercial) — **DESIGN TARGET:**
 ```
 sections:
   problem:    25-35%  | Pain point, viewer identifies
@@ -248,7 +248,7 @@ voice: brand_voice
 word_range: 50-500
 ```
 
-**PROGRESSIVE STEPS ARC** (tutorial):
+**PROGRESSIVE STEPS ARC** (tutorial) — **DESIGN TARGET:**
 ```
 sections:
   intro:       10-15%  | What you'll learn, prerequisites
@@ -279,7 +279,8 @@ SELECTION LOGIC:
    commercial → MUST use Problem Statement or Direct Address
    tutorial → PREFER Problem Statement or Question
 
-2. Content type affinity:
+2. Content type affinity [UNVALIDATED DEFAULTS — weights are design-time
+   heuristics, not empirically validated; subject to calibration via pilot data]:
    factual → Statistic (0.3), Question (0.3), Paradox (0.2), Scene (0.2)
    creative → Scene (0.4), Cold Open (0.3), Character (0.2), Teaser (0.1)
    instructional → Problem Statement (0.4), Question (0.3), Direct Address (0.3)
@@ -292,7 +293,8 @@ SELECTION LOGIC:
 
 4. Duration adjustment:
    < 60 seconds → Direct Address, Statistic only (fastest hooks)
-   60s - 5 min → Any non-extended hook
+   60s - 3 min → Any non-extended hook (YouTube Shorts upper limit)
+   3 - 5 min → Any non-extended hook
    5+ min → Any hook, including Scene and Cold Open (can afford setup time)
 
 5. User override → always respected if compatible with format
@@ -327,7 +329,8 @@ ALGORITHM:
 1. Agar duration given → convert to words:
    words = duration_minutes × speaking_rate[voice_mode]
 
-   SPEAKING RATES:
+   SPEAKING RATES [UNVALIDATED DEFAULTS — industry-conventional estimates,
+   not empirically calibrated for this system; actual rates vary by speaker]:
    standard_narration:     150 words/min
    conversational:         170 words/min
    energetic:              190 words/min
@@ -348,7 +351,8 @@ ALGORITHM:
 **Generalized model:**
 
 ```
-TENSION CURVE TYPES:
+TENSION CURVE TYPES [UNVALIDATED DEFAULTS — mappings are design-time
+heuristics, not empirically validated; subject to calibration via pilot data]:
 
 LINEAR_BUILD:
   Low → Medium → High → Peak → Resolution
@@ -389,6 +393,8 @@ DEFAULT MAPPING:
 | intermediate | 5-8 | Yes, with first-use definition | Moderate — define once, then use freely |
 | general | 3-5 | No — plain language (U01-U07) | Full — explain every concept |
 | beginner / children | 1-3 | No | Extended — use analogies, repeat key points |
+
+**[UNVALIDATED DEFAULTS]** — Concept-per-500-word ranges are design-time heuristics derived from educational content guidelines. Not empirically calibrated for this system. Subject to validation via pilot scripts.
 
 ---
 
@@ -456,10 +462,13 @@ ACTIVE_RULES = []
 # STEP 1: Always include UNIVERSAL rules
 ACTIVE_RULES += U01-U24  # (with modifications per content_type)
 
-# STEP 2: Check CONDITIONAL rules
-FOR each C_rule in C01-C20:
+# STEP 2: Check CONDITIONAL rules (preserved C01-C13 + new CN01-CN07)
+FOR each C_rule in C01-C13:
     IF C_rule.condition evaluates TRUE for this brief:
         ACTIVE_RULES += C_rule
+FOR each CN_rule in CN01-CN07:
+    IF CN_rule.condition evaluates TRUE for this brief:
+        ACTIVE_RULES += CN_rule  # CN-series: DESIGN TARGET, separate namespace
 
 # STEP 3: Check EXPERIMENTAL techniques
 FOR each X_rule in X01-X08:
@@ -504,13 +513,15 @@ IF content_type == instructional:
 | C11 | content includes health claims | Medical claim overlay |
 | C12 | content includes financial claims | Financial claim overlay |
 | C13 | content in non-English language | Translation/localization rules |
-| C14 | voice_mode == multi_character | Character voice differentiation |
-| C15 | platform specified | Platform formatting rules |
-| C16 | duration < 5 minutes | Short-form pacing rules |
-| C17 | brand_voice defined | Brand consistency rules |
-| C18 | humor > 0 in voice profile | Humor calibration (EXPERIMENTAL methodology) |
-| C19 | audience.knowledge_level != general | Audience adaptation rules |
-| C20 | language != source language | Localization rules |
+| **CN01** | voice_mode == multi_character | Character voice differentiation | **DESIGN TARGET** |
+| **CN02** | platform specified | Platform formatting rules | **DESIGN TARGET** |
+| **CN03** | duration < 5 minutes | Short-form pacing rules | **DESIGN TARGET** |
+| **CN04** | brand_voice defined | Brand consistency rules | **DESIGN TARGET** |
+| **CN05** | humor > 0 in voice profile | Humor calibration (EXPERIMENTAL methodology) | **DESIGN TARGET** |
+| **CN06** | audience.knowledge_level != general | Audience adaptation rules | **DESIGN TARGET** |
+| **CN07** | language != source language | Localization rules | **DESIGN TARGET** |
+
+**Note:** CN-series rules use a separate namespace from existing C01-C13 to preserve existing rule IDs, definitions, provenance and approval states. See `references/writing_rules.md` for canonical C01-C13 definitions.
 
 ### 8.3 Experimental Technique Registry
 

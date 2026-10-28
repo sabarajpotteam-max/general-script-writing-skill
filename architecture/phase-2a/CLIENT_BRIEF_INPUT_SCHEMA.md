@@ -86,20 +86,20 @@ format:
   required: false
   default: "documentary"  # backward compatibility
   values:
-    - documentary          # Long-form factual, investigation arc
-    - explainer            # Educational, concept progression
-    - narrative            # Fiction/creative nonfiction, act structure
-    - podcast_solo         # Single-host podcast
-    - podcast_interview    # Host + guest(s) podcast
-    - podcast_narrative    # Story-driven podcast
-    - short_form           # YouTube Shorts, Reels, TikTok (< 5 min)
-    - screenplay           # Film/TV screenplay format
-    - news                 # News bulletin, anchor script
-    - commercial           # Ad, promotional video, brand story
-    - tutorial             # How-to, step-by-step instructional
-    - audio_drama          # Radio play, audio fiction
-    - stage_play           # Theatre script
-    - custom               # User-defined (requires custom_format_spec)
+    - documentary          # Long-form factual, investigation arc — VALIDATED (pilot scripts)
+    - explainer            # Educational, concept progression — DESIGN TARGET
+    - narrative            # Fiction/creative nonfiction, act structure — DESIGN TARGET
+    - podcast_solo         # Single-host podcast — DESIGN TARGET
+    - podcast_interview    # Host + guest(s) podcast — DESIGN TARGET
+    - podcast_narrative    # Story-driven podcast — DESIGN TARGET
+    - short_form           # YouTube Shorts (≤ 3 min), Reels, TikTok — DESIGN TARGET
+    - screenplay           # Film/TV screenplay format — DESIGN TARGET
+    - news                 # News bulletin, anchor script — DESIGN TARGET
+    - commercial           # Ad, promotional video, brand story — DESIGN TARGET
+    - tutorial             # How-to, step-by-step instructional — DESIGN TARGET
+    - audio_drama          # Radio play, audio fiction — DESIGN TARGET
+    - stage_play           # Theatre script — DESIGN TARGET
+    - custom               # User-defined (requires custom_format_spec) — DESIGN TARGET
   description: "Script ka format. Agar missing, system infers from other fields."
 
 niche:
@@ -143,6 +143,25 @@ content_type:
     - hybrid: factual claims need evidence, creative elements don't
     - instructional: accuracy required, formal citation optional
 
+research_mode:
+  type: enum
+  required: false
+  default: "client_provided"  # backward compatibility — current behavior
+  values: [client_provided, system_assisted, minimal]
+  description: >
+    §2.5 Research Integration — how evidence is sourced:
+    - client_provided: client supplies evidence register (CURRENT BEHAVIOR, unchanged)
+    - system_assisted: system builds evidence register from approved source
+      registries (S/F/R/K/V series). System researches when supported, validates
+      sources, distinguishes missing evidence ([UNRESOURCED]) from verified facts.
+      NEVER invents citations. Client reviews register before generation.
+    - minimal: creative/instructional content, no formal evidence register needed
+  constraints:
+    - system_assisted with content_type=factual → system research phase before generation
+    - system_assisted NEVER fabricates citations or sources
+    - Missing evidence flagged as [UNRESOURCED], not silently omitted
+    - Generated evidence register is reviewable before script generation proceeds
+
 target_duration:
   type: string
   required: false
@@ -177,7 +196,7 @@ platform:
   default: "generic"
   values:
     - youtube              # YouTube long-form
-    - youtube_shorts       # YouTube Shorts (< 60s)
+    - youtube_shorts       # YouTube Shorts (≤ 3 minutes)
     - podcast_app          # Apple Podcasts, Spotify, etc.
     - broadcast_tv         # Television broadcast
     - broadcast_radio      # Radio broadcast
@@ -411,11 +430,12 @@ custom_format_spec:
 
 | Condition | Required Fields | Error if Missing |
 |---|---|---|
-| content_type = factual | subject, object, mechanism, uncertainty, evidence (≥ 1 item) | "Factual content requires subject, object, mechanism, uncertainty, and at least one evidence item." |
+| content_type = factual AND research_mode = client_provided | subject, object, mechanism, uncertainty, evidence (≥ 1 item) | "Factual content with client-provided evidence requires subject, object, mechanism, uncertainty, and at least one evidence item." |
+| content_type = factual AND research_mode = system_assisted | subject (recommended), topic sufficient | "System-assisted research mode: system will build evidence register from approved sources. Client reviews before generation. See §2.5 Research Integration." |
 | content_type = hybrid | evidence for factual claims only | "Hybrid content: evidence required for factual claims. Tag which claims are factual vs creative." |
 | format = custom | custom_format_spec | "Custom format requires custom_format_spec with sections defined." |
 | voice.mode = brand_voice | brand_voice object | "Brand voice mode requires brand_voice guidelines." |
-| platform = youtube_shorts | target_duration ≤ 60s OR target_words ≤ 200 | "YouTube Shorts maximum 60 seconds." |
+| platform = youtube_shorts | target_duration ≤ 180s OR target_words ≤ 450 | "YouTube Shorts maximum 3 minutes (180 seconds)." |
 
 ### 3.3 Cross-Field Validation
 
@@ -425,7 +445,7 @@ custom_format_spec:
 | Evidence vs content_type | evidence list must match content_type expectation | Warning (not HOLD) |
 | Niche vs sensitivity | High-sensitivity niche without registered adapter | HOLD_DOMAIN_UNKNOWN |
 | Audience vs content | Adult content flagged for child audience | HOLD_AUDIENCE_RISK |
-| Platform vs duration | Platform limits respected (Shorts < 60s, etc.) | HOLD_PLATFORM_COMPLIANCE |
+| Platform vs duration | Platform limits respected (YouTube Shorts ≤ 3 min, TikTok per current limits, etc.) | HOLD_PLATFORM_COMPLIANCE |
 
 ### 3.4 Blocked Content Enforcement
 
@@ -483,7 +503,7 @@ Jab ek optional field missing hai:
 | narrative | 20 minutes |
 | podcast_solo | 20 minutes |
 | podcast_interview | 30 minutes |
-| short_form | 60 seconds |
+| short_form | 60 seconds (platform-dependent: YouTube Shorts ≤ 3 min) |
 | news | 3 minutes |
 | commercial | 30 seconds |
 | tutorial | 10 minutes |
@@ -532,12 +552,23 @@ evidence:
 #   niche = "N01" → Tier 1 registered
 #   format = "documentary" (default, backward compat)
 #   content_type = "factual" (inferred from format + evidence present)
-#   audience = "general_adult" (default)
-#   language = "en" (default)
+#   audience = "general_adult" (smart default — required in 2.0 schema
+#              but auto-filled for legacy briefs)
+#   language = "en" (smart default — required in 2.0 schema
+#              but auto-filled for legacy briefs)
+#   research_mode = "client_provided" (default — current behavior preserved)
 #   target_words = 4500 (direct)
 #   subject, object, mechanism, uncertainty = direct (factual mode)
 #   evidence = direct (factual mode)
 ```
+
+**Smart Default Reconciliation (Correction #9):**
+The 2.0 schema declares `audience` and `language` as REQUIRED fields, but legacy 1.0 briefs do not include them. Resolution: these fields are "required-with-defaults" — they always have values, but the system auto-fills them when absent:
+- Missing `audience` → `"general_adult"` (safe default, matches current implicit behavior)
+- Missing `language` → `"en"` (safe default, matches current English-only behavior)
+- Missing `research_mode` → `"client_provided"` (preserves current evidence-required behavior)
+
+This ensures zero breaking changes for any valid 1.0 brief while maintaining the field as required for new 2.0 briefs where explicit specification is preferred.
 
 ### 5.2 Alias Fields
 
@@ -717,15 +748,16 @@ COMPATIBILITY GUARANTEE:
 **Client Brief Input Schema LOOM architecture ka "front door" hai — yeh define karta hai ke users kaise apni requirements communicate karte hain.**
 
 **Key design decisions:**
-1. **Sirf 3 required fields** (topic, audience, language) — barrier to entry bahut low
-2. **Smart defaults** — missing fields system infer karta hai, reject nahi karta
+1. **Sirf 3 required fields** (topic, audience, language) — barrier to entry bahut low; legacy briefs get smart defaults for audience ("general_adult") and language ("en")
+2. **Smart defaults** — missing fields system infer karta hai, reject nahi karta; required-with-defaults pattern ensures backward compatibility
 3. **Backward compatible** — current N01-N05 briefs bina kisi change ke kaam karenge → **DESIGN TARGET** until executed regression tests establish it
 4. **Content type system** — factual/creative/hybrid/instructional modes se evidence handling flexible
-5. **Free-text niche** — "true crime" ya "underwater basket weaving" bhi accept hoga
-6. **Creative fields** — characters, setting, premise — fiction ke liye
-7. **Brand voice** — commercial/corporate content ke liye
-8. **Custom format** — user apna format define kar sakta hai
-9. **6 example briefs** — backward compatible documentary se lekar Hindi explainer tak
+5. **Research mode** — client_provided (current behavior), system_assisted (system builds evidence register), minimal (creative/instructional). Client no longer needs to manually prepare complete evidence register for factual content when system_assisted mode is used.
+6. **Free-text niche** — "true crime" ya "underwater basket weaving" bhi accept hoga
+7. **Creative fields** — characters, setting, premise — fiction ke liye
+8. **Brand voice** — commercial/corporate content ke liye
+9. **Custom format** — user apna format define kar sakta hai
+10. **6 example briefs** — backward compatible documentary se lekar Hindi explainer tak
 
 **DESIGN TARGET Declarations:**
 - Backward compatibility (current N01-N05 briefs unchanged) → **DESIGN TARGET** until executed regression tests establish it

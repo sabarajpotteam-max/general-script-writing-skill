@@ -84,20 +84,24 @@ Parser ka kaam:
 ```
 FORMAT REGISTRY (extensible, not hardcoded):
 
-DOCUMENTARY        → 8-section arc, evidence-mandatory, narrator voice
-EXPLAINER          → Hook-Concept-Example-Application-Summary, evidence-preferred
-NARRATIVE_FICTION   → Act structure (3-act/Hero's Journey/etc.), evidence-optional
-PODCAST_SOLO       → Intro-Segments-Outro, multi-section, evidence-contextual
-PODCAST_INTERVIEW  → Intro-Q&A blocks-Outro, dual-voice, evidence-optional
-PODCAST_NARRATIVE   → Story-driven podcast, narrator + characters, evidence-contextual
-SHORT_FORM         → Hook-Body-CTA (compressed), 30s-5min, evidence-optional
-SCREENPLAY         → Slugline/Action/Dialogue format, industry standard
-NEWS_BULLETIN      → Lead-Body-Context-Close, evidence-mandatory, AP/Reuters style
-COMMERCIAL         → Problem-Solution-CTA, brand voice integration, 15/30/60s
-TUTORIAL           → Setup-Steps-Demo-Practice-Summary, evidence-preferred
-STAGE_PLAY         → Act/Scene structure, dialogue-driven, stage directions
-AUDIO_DRAMA        → Sound design cues, multi-character, immersive audio
-CUSTOM             → User-defined structure with minimum requirements
+DOCUMENTARY        → 8-section arc, evidence-mandatory, narrator voice      [VALIDATED — pilot scripts]
+EXPLAINER          → Hook-Concept-Example-Application-Summary, evidence-preferred  [DESIGN TARGET]
+NARRATIVE_FICTION   → Act structure (3-act/Hero's Journey/etc.), evidence-optional  [DESIGN TARGET]
+PODCAST_SOLO       → Intro-Segments-Outro, multi-section, evidence-contextual     [DESIGN TARGET]
+PODCAST_INTERVIEW  → Intro-Q&A blocks-Outro, dual-voice, evidence-optional        [DESIGN TARGET]
+PODCAST_NARRATIVE   → Story-driven podcast, narrator + characters, evidence-contextual [DESIGN TARGET]
+SHORT_FORM         → Hook-Body-CTA (compressed), 30s-3min (platform-dependent)    [DESIGN TARGET]
+SCREENPLAY         → Slugline/Action/Dialogue format, industry standard            [DESIGN TARGET]
+NEWS_BULLETIN      → Lead-Body-Context-Close, evidence-mandatory, AP/Reuters style [DESIGN TARGET]
+COMMERCIAL         → Problem-Solution-CTA, brand voice integration, 15/30/60s     [DESIGN TARGET]
+TUTORIAL           → Setup-Steps-Demo-Practice-Summary, evidence-preferred         [DESIGN TARGET]
+STAGE_PLAY         → Act/Scene structure, dialogue-driven, stage directions        [DESIGN TARGET]
+AUDIO_DRAMA        → Sound design cues, multi-character, immersive audio           [DESIGN TARGET]
+CUSTOM             → User-defined structure with minimum requirements              [DESIGN TARGET]
+
+NOTE: Only DOCUMENTARY has been validated through pilot scripts and end-to-end
+acceptance tests. All other formats remain DESIGN TARGETS until per-format pilots
+validate arc templates, QA modules, and acceptance criteria.
 ```
 
 Har format define karta hai:
@@ -187,21 +191,23 @@ Current 24 UNIVERSAL rules (U01-U24) **retain** — yeh genuinely universal hain
 - U10 (never fabricate evidence) → ALWAYS for factual; for creative: "never present fiction as fact"
 - U22 (no fabricated dialogue) → ALWAYS for factual; for creative: clearly fiction-framed
 
-### 3.2 Conditional Rules (Expanded)
+### 3.2 Conditional Rules (Preserved + Extended)
 
-Current 13 CONDITIONAL rules (C01-C13) retain with expanded trigger conditions:
+**Existing C01-C13 PRESERVED as-is** — IDs, definitions, provenance and approval states unchanged. No redefinition. See `references/writing_rules.md` for canonical definitions.
 
-**New conditional rules needed:**
+**New conditional rules use separate CN-series namespace** (Conditional-New) to prevent collision with existing C-series IDs:
 
-| # | Rule | Condition | Basis |
-|---|---|---|---|
-| C14 | Multi-character voice differentiation | Format requires multiple speakers | Phase 1 Gap: dialogue craft |
-| C15 | Platform-specific formatting | Target platform specified | Phase 1 Gap: platform formatting |
-| C16 | Duration-specific pacing | Target duration < 5 minutes | Phase 1 Gap: short-form pacing |
-| C17 | Brand voice consistency | Client brief includes brand voice | Phase 1 Gap: brand integration |
-| C18 | Humor tone calibration | Content includes comedy elements | Phase 1 Gap: humor methodology |
-| C19 | Audience knowledge adaptation | Brief specifies audience expertise level | Current C08 expanded |
-| C20 | Localization (not just translation) | Target language ≠ source research language | Phase 1 Gap: localization |
+| # | Rule | Condition | Basis | Status |
+|---|---|---|---|---|
+| CN01 | Multi-character voice differentiation | Format requires multiple speakers | Phase 1 Gap: dialogue craft | DESIGN TARGET |
+| CN02 | Platform-specific formatting | Target platform specified | Phase 1 Gap: platform formatting | DESIGN TARGET |
+| CN03 | Duration-specific pacing | Target duration < 5 minutes | Phase 1 Gap: short-form pacing | DESIGN TARGET |
+| CN04 | Brand voice consistency | Client brief includes brand voice | Phase 1 Gap: brand integration | DESIGN TARGET |
+| CN05 | Humor tone calibration | Content includes comedy elements | Phase 1 Gap: humor methodology | DESIGN TARGET |
+| CN06 | Audience knowledge adaptation | Brief specifies audience expertise level | Extends C08 scope | DESIGN TARGET |
+| CN07 | Localization (not just translation) | Target language ≠ source research language | Phase 1 Gap: localization | DESIGN TARGET |
+
+**Note:** CN-series rules require validation through pilot scripts before promotion to approved status. Existing C01-C13 activation conditions are unmodified; new activation policies for existing rules, if needed, will use separate policy-overlay files rather than redefining existing rule IDs.
 
 ### 3.3 Evidence Engine (Generalized from Current)
 
@@ -223,7 +229,54 @@ EVIDENCE ENGINE:
 - `creative`: Fiction frame check — fictional claims not presented as real
 - `hybrid`: Split tracking — real claims get full pipeline, fictional elements get fiction frame
 
-### 3.4 Source Rights Module
+### 3.4 Research Integration Workflow (Brief-to-Research-to-Script)
+
+**Problem:** Current schema requires clients to manually prepare a complete evidence register. Correction: A client must be able to provide topic, niche, audience, language, format and duration without preparing evidence items.
+
+**Design — Controlled Research Workflow:**
+
+```
+CLIENT BRIEF (topic, niche, audience, language, format, duration)
+    │
+    ▼
+┌─────────────────────────────────────────┐
+│  RESEARCH PHASE (when evidence absent)   │
+│                                          │
+│  1. System identifies factual claims     │
+│     needed for the topic + format        │
+│  2. Source lookup from approved registries│
+│     (S/F/R/K/V series — rights-cleared)  │
+│  3. Each claim gets:                     │
+│     a) Source reference (or MISSING tag)  │
+│     b) Epistemic status assignment       │
+│     c) Rights/license check              │
+│  4. MISSING evidence → clearly flagged   │
+│     as [UNRESOURCED] — never fabricated  │
+│  5. Research output = generated evidence │
+│     register for review before writing   │
+└──────────────┬──────────────────────────┘
+               ▼
+┌─────────────────────────────────────────┐
+│  VALIDATION GATE                         │
+│  - Verified sources → proceed            │
+│  - Missing evidence → HOLD_UNVERIFIED    │
+│  - Unassessed sources → HOLD_RIGHTS      │
+│  - NEVER invent citations                │
+│  - NEVER present missing evidence as     │
+│    verified facts                        │
+└──────────────┬──────────────────────────┘
+               ▼
+         GENERATION PHASE
+```
+
+**Research modes:**
+- `client_provided` — client supplies evidence register (current behavior, unchanged)
+- `system_assisted` — system builds evidence register from approved sources, client reviews before generation
+- `minimal` — creative/instructional content, no formal evidence register needed
+
+**CRITICAL:** System-assisted research ONLY uses sources from the approved source registry. It never fabricates citations, never invents sources, and clearly distinguishes missing evidence (`[UNRESOURCED]`) from verified facts. Any system-generated evidence register must be reviewable before script generation proceeds.
+
+### 3.5 Source Rights Module
 
 **Current gap addressed:** License checking per source.
 
@@ -499,28 +552,34 @@ NICHE-SPECIFIC QA (from adapter):
 
 ### 6.2 HOLD System (Extended)
 
-**Current 12 HOLD types retain. New HOLD types:**
+**All 12 existing HOLD types preserved. 8 new HOLD types added. Total: 20.**
 
-| HOLD Type | Trigger | New? |
-|---|---|---|
-| HOLD_MISSING_IDENTITY | Missing required fields | Existing |
-| HOLD_RIGHTS | Source rights issue | Existing |
-| HOLD_DISPUTED_PROVENANCE | Source provenance unclear | Existing |
-| HOLD_UNVERIFIED_FACT | Factual claim unverified | Existing |
-| HOLD_STALE_FORECAST | Time-sensitive data stale | Existing |
-| HOLD_TITLE_PREMISE | Title overstates evidence | Existing |
-| HOLD_HARM | Content could cause harm | Existing |
-| HOLD_REVIEW | Needs human review | Existing |
-| HOLD_NOT_APPROVED | K-series item not approved | Existing |
-| HOLD_NEEDS_RECHECK | Epistemic issue detected | Existing |
-| **HOLD_FORMAT_MISMATCH** | Content doesn't fit declared format | **NEW** |
-| **HOLD_AUDIENCE_RISK** | Content inappropriate for declared audience | **NEW** |
-| **HOLD_PLATFORM_COMPLIANCE** | Platform rules may be violated | **NEW** |
-| **HOLD_DOMAIN_UNKNOWN** | High-stakes topic without registered adapter | **NEW** |
-| **HOLD_CULTURAL_SENSITIVITY** | Cross-cultural content needs review | **NEW** |
-| **HOLD_LEGAL_CLAIM** | Legal assertion needs verification | **NEW** |
-| **HOLD_MEDICAL_CLAIM** | Medical assertion needs verification | **NEW** |
-| **HOLD_FINANCIAL_CLAIM** | Financial assertion needs verification | **NEW** |
+| HOLD Type | Trigger | Status | Severity |
+|---|---|---|---|
+| HOLD_MISSING_IDENTITY | Missing required fields | Existing | BLOCKING |
+| HOLD_RIGHTS | Source rights issue | Existing | BLOCKING |
+| HOLD_DISPUTED_PROVENANCE | Source provenance unclear | Existing | BLOCKING |
+| HOLD_UNVERIFIED_FACT | Factual claim unverified | Existing | BLOCKING |
+| HOLD_STALE_FORECAST | Time-sensitive data stale | Existing | BLOCKING |
+| HOLD_TITLE_PREMISE | Title overstates evidence | Existing | BLOCKING |
+| HOLD_HARM | Content could cause harm | Existing | BLOCKING |
+| HOLD_REVIEW | Needs human review | Existing | BLOCKING |
+| HOLD_NOT_APPROVED | K-series item not approved | Existing | BLOCKING |
+| HOLD_NEEDS_RECHECK | Epistemic issue detected | Existing | BLOCKING |
+| HOLD_ORIGINAL_MISSING | Original source unavailable for verification | Existing | BLOCKING |
+| HOLD_SOURCE_ROLE | Source role/authority unclear or contested | Existing | BLOCKING |
+| **HOLD_FORMAT_MISMATCH** | Content doesn't fit declared format | **NEW** | ADVISORY |
+| **HOLD_AUDIENCE_RISK** | Content inappropriate for declared audience | **NEW** | BLOCKING |
+| **HOLD_PLATFORM_COMPLIANCE** | Platform rules may be violated | **NEW** | ADVISORY |
+| **HOLD_DOMAIN_UNKNOWN** | High-stakes topic without registered adapter | **NEW** | BLOCKING |
+| **HOLD_CULTURAL_SENSITIVITY** | Cross-cultural content needs review | **NEW** | BLOCKING |
+| **HOLD_LEGAL_CLAIM** | Legal assertion needs verification | **NEW** | BLOCKING |
+| **HOLD_MEDICAL_CLAIM** | Medical assertion needs verification | **NEW** | BLOCKING |
+| **HOLD_FINANCIAL_CLAIM** | Financial assertion needs verification | **NEW** | BLOCKING |
+
+**HOLD Severity Rule:** Unresolved factual-integrity, rights or safety HOLDs are ALWAYS BLOCKING and cannot be bypassed by advisory labelling. Only format-fit and platform-compliance HOLDs are ADVISORY (script can release with acknowledgment). HOLD_DOMAIN_UNKNOWN is BLOCKING for high-stakes topics because unknown domains with health, financial or legal implications require expert verification before release.
+
+**Production Status Rule:** Research-only outputs retain RESEARCH_ONLY status. A HOLD cannot be cleared by labelling an output as "advisory release." BLOCKING HOLDs must be substantively resolved (evidence provided, source verified, expert reviewed) before any release.
 
 ### 6.3 QA Report (Generalized)
 
@@ -558,7 +617,7 @@ QA REPORT STRUCTURE:
 .claude/skills/universal-scriptwriting/
 ├── SKILL.md                          # Main skill file (generalized)
 ├── references/
-│   ├── writing_rules.md              # U01-U24 + C01-C20 + X01-X08
+│   ├── writing_rules.md              # U01-U24 + C01-C13 + CN01-CN07 + X01-X08
 │   ├── evidence_standards.md         # Epistemic system (unchanged)
 │   ├── format_registry.md            # Format definitions + arc templates
 │   └── voice_tone_guide.md           # Voice models + tone spectrum
@@ -654,12 +713,15 @@ Worker E proposed A00-A10 architecture. Yeh blueprint us se COMPATIBLE hai:
 
 **Existing assets jo as-is reuse hote hain:**
 - 24 UNIVERSAL writing rules (U01-U24)
+- 13 CONDITIONAL rules (C01-C13) — IDs, definitions, provenance preserved; new rules in CN-series namespace (CN01-CN07)
+- 8 EXPERIMENTAL techniques (X01-X08)
 - 6-level epistemic status system
 - Blocked/quarantined enforcement
 - Source type weight hierarchy
-- HOLD condition system (extended)
+- All 12 existing HOLD types preserved (including HOLD_ORIGINAL_MISSING + HOLD_SOURCE_ROLE) + 8 new = 20 total
 - QA report structure (generalized)
 - 5 registered niche adapters (N01-N05)
+- Documentary ±5% spoken narration word-budget tolerance (preserved)
 - Test infrastructure pattern (85 integration + 37 prototype = 122 core tests, plus 12 invocation-pipeline checks separately categorized)
 
 **DESIGN TARGET Declarations:**
