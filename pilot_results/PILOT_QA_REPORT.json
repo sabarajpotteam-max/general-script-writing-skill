@@ -1,0 +1,51 @@
+{
+  "sections": [
+    {
+      "section": "HOOK",
+      "words": 222
+    },
+    {
+      "section": "DAS PROBLEM",
+      "words": 321
+    },
+    {
+      "section": "DIE ENTDECKUNG",
+      "words": 297
+    },
+    {
+      "section": "DER MECHANISMUS",
+      "words": 296
+    },
+    {
+      "section": "DIE HERAUSFORDERUNG",
+      "words": 680
+    },
+    {
+      "section": "IMPLIKATIONEN",
+      "words": 227
+    },
+    {
+      "section": "OUTRO",
+      "words": 157
+    }
+  ],
+  "total_words": 2200,
+  "spoken_narration_words": 1864,
+  "target_words": 3000,
+  "word_budget_status": "REVIEW",
+  "evidence_referenced": [
+    "E-301",
+    "E-302",
+    "E-303",
+    "E-304",
+    "E-305"
+  ],
+  "evidence_unreferenced": [],
+  "evidence_traceability": "PASS",
+  "subject_consistency": "PASS",
+  "object_consistency": "PASS",
+  "epistemic_upgrades": [],
+  "epistemic_integrity": "PASS",
+  "input_validation": "PASS",
+  "input_holds": []
+}

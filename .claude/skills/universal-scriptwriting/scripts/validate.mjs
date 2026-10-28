@@ -216,13 +216,18 @@ export function analyzeScript(scriptText, input) {
   let currentSection = null;
   let currentContent = [];
 
+  // Section heading patterns: ## or ### level, English and German names
+  const scriptHeadingRe = /^#{2,3}\s+(?:HOOK|SECTION\s+\d+|OUTRO|DAS PROBLEM|DIE ENTDECKUNG|DER MECHANISMUS|DIE HERAUSFORDERUNG|DIE AUFL[OÖ]SUNG|IMPLIKATIONEN|FOLGERUNGEN|Evidence Register|Evidenz\s*register|QA[- ]?Report|QA[- ]?Bericht|PART\s+\d+)[\s:]*(.*)$/i;
+  // Non-narration section patterns (evidence tables, QA tables, part dividers)
+  const nonNarrationRe = /evidence\s*register|evidenz\s*register|qa[\s-]?report|qa[\s-]?bericht|part\s+\d+.*(?:evidenz|qa|bericht)/i;
+
   for (const line of lines) {
-    const sectionMatch = line.match(/^##\s+(?:HOOK|SECTION\s+\d+|OUTRO|Evidence Register|QA Report)[\s:]*(.*)$/i);
+    const sectionMatch = line.match(scriptHeadingRe);
     if (sectionMatch) {
       if (currentSection) {
         sections.push({ name: currentSection, content: currentContent.join("\n") });
       }
-      currentSection = line.replace(/^##\s+/, "").trim();
+      currentSection = line.replace(/^#{2,3}\s+/, "").trim();
       currentContent = [];
     } else if (currentSection) {
       currentContent.push(line);
@@ -232,10 +237,10 @@ export function analyzeScript(scriptText, input) {
     sections.push({ name: currentSection, content: currentContent.join("\n") });
   }
 
-  // Filter to script sections only (not evidence register or QA report)
+  // Filter to script sections only (not evidence register, QA report, or PART dividers)
   const scriptSections = sections.filter(s =>
-    !s.name.toLowerCase().includes("evidence register") &&
-    !s.name.toLowerCase().includes("qa report")
+    !nonNarrationRe.test(s.name) &&
+    !/^PART\s+\d+/i.test(s.name)
   );
 
   const wordCounts = scriptSections.map(s => ({
