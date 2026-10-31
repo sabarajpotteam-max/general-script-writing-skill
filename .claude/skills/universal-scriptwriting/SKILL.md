@@ -452,8 +452,48 @@ The Stage 8 report as specified above.
 ## HOLD Severity
 
 - **HOLD_HARM** and **HOLD_SOURCE_ROLE** are ALWAYS BLOCKING. They cannot be bypassed, downgraded, or overridden by advisory labels. Unresolved factual-integrity and safety issues must block release.
-- **HOLD_NO_EVIDENCE** blocks when content type requires evidence and research_mode is not system_assisted. For system_assisted mode, missing evidence is a warning (research needed before generation).
+- **HOLD_NO_EVIDENCE** blocks when content type requires evidence and either (a) research_mode is not system_assisted, or (b) research_mode is system_assisted but no research provider is available (UNRESOURCED state — M3.1 safety gate). Warnings alone never authorize unsupported factual claims.
 - All other HOLD types also block the final verdict unless explicitly resolved.
+
+## M3.1 Additions — Safety Patch
+
+### Simple Client Briefs (FIX 3)
+
+New-style briefs require only `title`, `niche`, and `topic` (plus optional `audience`, `language`, `format`, `duration`, `objectives`). The legacy fields `subject`, `object`, `mechanism` are not required when `topic` is present. If `uncertainty` is omitted, it defaults to `"qualified"`.
+
+### Research States (FIX 2)
+
+Each brief is assigned a research state reflecting evidence readiness:
+
+| State | Meaning |
+|-------|---------|
+| `not_started` | No research initiated (minimal mode, or client_provided with no evidence) |
+| `research_pending` | System-assisted research needed, provider available |
+| `verified` | Client-provided evidence present and accepted |
+| `partially_verified` | System-assisted mode with some evidence present |
+| `unresourced` | System-assisted research needed but no provider available |
+| `failed` | Research attempted but failed |
+
+### Generation Readiness Gates (FIX 2)
+
+Four gates control progression from brief acceptance to output:
+
+| Gate | Meaning |
+|------|---------|
+| `brief_accepted` | No blocking HOLDs in brief validation |
+| `research_ready` | Evidence verified, partially verified, or not required |
+| `factual_generation_permitted` | Brief accepted AND evidence sufficient for factual claims |
+| `production_release_permitted` | Always `false` — RESEARCH_ONLY status enforced |
+
+If factual research is required but no authorized provider or verified evidence is available, `factual_generation_permitted` is `false`. Offline fixture providers are explicitly NOT live research and NOT verified evidence.
+
+### Exact Section Budgets (FIX 4)
+
+Section word budgets are computed using the largest-remainder method to guarantee the sum equals `target_words` exactly, while respecting each section's min/max percentage constraints. No rounding drift.
+
+### Hybrid Claim Boundaries (FIX 5)
+
+Individual claims within hybrid content are tagged as `factual_claim`, `creative_element`, or `ambiguous` using indicator-based detection. High-risk domains (health, finance, legal, safety) force all claims to `factual_claim` regardless of indicators. Mixed indicators resolve to `factual_claim` (safety-first).
 
 ## Restrictions
 

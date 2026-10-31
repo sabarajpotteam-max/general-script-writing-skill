@@ -185,9 +185,9 @@ console.log("--- Category 3: Hybrid factual-claim boundaries ---");
     mechanism: undefined,
     topic: "marketing",
   });
-  const m3 = resolveM3(brief, SHORT_FORM_FORMAT);
+  const m3 = resolveM3(brief, SHORT_FORM_FORMAT, { providerAvailable: true });
   assert(m3.research_mode === "system_assisted", "M3-019a: Hybrid new-style without evidence → system_assisted");
-  assert(m3.holds.every(h => h.type !== "HOLD_NO_EVIDENCE"), "M3-019b: system_assisted hybrid does not get HOLD_NO_EVIDENCE");
+  assert(m3.holds.every(h => h.type !== "HOLD_NO_EVIDENCE"), "M3-019b: system_assisted hybrid with provider does not get HOLD_NO_EVIDENCE");
   assert(m3.warnings.length > 0, "M3-019c: system_assisted hybrid warns about needing research");
 }
 
@@ -316,10 +316,10 @@ console.log("--- Category 7: Unavailable research tools ---");
     object: undefined,
     mechanism: undefined,
   });
-  const m3 = resolveM3(brief, DOCUMENTARY_FORMAT);
+  const m3 = resolveM3(brief, DOCUMENTARY_FORMAT, { providerAvailable: true });
   assert(m3.research_mode === "system_assisted", "M3-043: Factual without evidence in system_assisted mode");
   assert(m3.warnings.length > 0, "M3-044: system_assisted mode produces warning about needing research");
-  assert(m3.holds.every(h => h.type !== "HOLD_NO_EVIDENCE"), "M3-045: system_assisted mode does not produce HOLD_NO_EVIDENCE");
+  assert(m3.holds.every(h => h.type !== "HOLD_NO_EVIDENCE"), "M3-045: system_assisted with provider does not produce HOLD_NO_EVIDENCE");
 }
 
 // ========================================================================
@@ -394,7 +394,7 @@ console.log("--- Category 9: Unsupported factual claims triggering HOLD ---");
   });
   const result = validateInput(brief);
   const hasHoldNoEvidence = result.holds.some(h => h.type === "HOLD_NO_EVIDENCE");
-  assert(!hasHoldNoEvidence, "M3-055: New-style factual brief without evidence does NOT get HOLD_NO_EVIDENCE (system_assisted)");
+  assert(hasHoldNoEvidence, "M3-055: New-style factual brief without evidence and no provider GETS HOLD_NO_EVIDENCE (M3.1 safety gate)");
   assert(result.m3_resolution.research_mode === "system_assisted", "M3-056: Correctly inferred system_assisted for new-style factual");
 }
 

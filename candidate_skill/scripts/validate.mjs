@@ -12,7 +12,7 @@
 import { readFileSync } from "node:fs";
 import { resolveNiche, isRegisteredNiche, registerNiche, isBuiltinNiche } from "./niche_resolver.mjs";
 import { resolveFormat, getFormatDefinition, isRegisteredFormat, FORMAT_STATUS } from "./format_registry.mjs";
-import { resolveM3, CONTENT_TYPES, RESEARCH_MODES, inferContentType, inferResearchMode, getEvidencePolicy } from "./content_type_engine.mjs";
+import { resolveM3, CONTENT_TYPES, RESEARCH_MODES, RESEARCH_STATES, inferContentType, inferResearchMode, getEvidencePolicy, assessGenerationReadiness, deriveResearchState } from "./content_type_engine.mjs";
 
 const REGISTERED_NICHES = new Set(["N01", "N02", "N03", "N04", "N05"]);
 const BLOCKED_SOURCES = new Set(["F-190", "R052"]);
@@ -39,7 +39,7 @@ const HOLD_TYPES = {
 
 export { resolveNiche, isRegisteredNiche, registerNiche, isBuiltinNiche } from "./niche_resolver.mjs";
 export { resolveFormat, getFormatDefinition, isRegisteredFormat, FORMAT_STATUS } from "./format_registry.mjs";
-export { CONTENT_TYPES, RESEARCH_MODES, inferContentType, inferResearchMode, getEvidencePolicy, resolveM3 } from "./content_type_engine.mjs";
+export { CONTENT_TYPES, RESEARCH_MODES, RESEARCH_STATES, inferContentType, inferResearchMode, getEvidencePolicy, resolveM3, assessGenerationReadiness, deriveResearchState } from "./content_type_engine.mjs";
 
 export function validateInput(input) {
   const holds = [];
@@ -47,10 +47,26 @@ export function validateInput(input) {
   const evidence_register = [];
 
   // Stage 1: Topic Intake
-  const required = ["title", "niche", "subject", "object", "mechanism", "uncertainty"];
-  const missing = required.filter(f => !input[f]);
-  if (missing.length > 0) {
-    holds.push({ type: HOLD_TYPES.MISSING_IDENTITY, detail: `Missing fields: ${missing.join(", ")}` });
+  // FIX 3: Support new-style briefs (topic + niche + audience + language + format + duration)
+  // Legacy briefs require subject/object/mechanism/uncertainty.
+  // New-style briefs require topic + niche; subject/object/mechanism/uncertainty are derived or optional.
+  const isNewStyleBrief = !!input.topic && !input.subject && !input.object && !input.mechanism;
+  let missing;
+  if (isNewStyleBrief) {
+    const newRequired = ["title", "niche", "topic"];
+    missing = newRequired.filter(f => !input[f]);
+    if (missing.length > 0) {
+      holds.push({ type: HOLD_TYPES.MISSING_IDENTITY, detail: `Missing fields: ${missing.join(", ")}` });
+    }
+    if (!input.uncertainty) {
+      input.uncertainty = input.uncertainty || "qualified";
+    }
+  } else {
+    const legacyRequired = ["title", "niche", "subject", "object", "mechanism", "uncertainty"];
+    missing = legacyRequired.filter(f => !input[f]);
+    if (missing.length > 0) {
+      holds.push({ type: HOLD_TYPES.MISSING_IDENTITY, detail: `Missing fields: ${missing.join(", ")}` });
+    }
   }
 
   // Dynamic niche resolution (M1: replaces hardcoded 5-niche restriction)
@@ -282,6 +298,8 @@ export function validateInput(input) {
       research_mode: researchMode,
       research_mode_source: m3Result.research_mode_source,
       evidence_policy: evidencePolicy.description,
+      research_state: m3Result.research_state,
+      generation_readiness: m3Result.generation_readiness,
       qa_limitations: m3Result.qa_limitations,
       generation_permitted: m3Result.generation_permitted && holds.length === 0,
     },

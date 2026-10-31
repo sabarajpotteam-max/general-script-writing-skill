@@ -23,19 +23,19 @@ function loadStructure(brief) {
       ? estimateWordsFromDuration(brief.target_duration, format)
       : formatDefaultWords(format);
 
-  const sections = arc.sections.map(s => {
-    const minWords = Math.round(targetWords * s.min_pct / 100);
-    const maxWords = Math.round(targetWords * s.max_pct / 100);
+  const budgetResult = normalizeSectionBudgets(arc.sections, targetWords);
+  if (budgetResult.error) {
     return {
-      id: s.id,
-      label: s.label,
-      min_pct: s.min_pct,
-      max_pct: s.max_pct,
-      min_words: minWords,
-      max_words: maxWords,
-      target_words: Math.round((minWords + maxWords) / 2),
+      success: false,
+      hold: {
+        type: 'HOLD_FORMAT_MISMATCH',
+        severity: 'BLOCKING',
+        message: budgetResult.error,
+      },
+      structure: null,
     };
-  });
+  }
+  const sections = budgetResult.sections;
 
   return {
     success: true,
@@ -83,6 +83,90 @@ function estimateWordsFromDuration(durationStr, format) {
   return Math.round(minutes * wordsPerMinute);
 }
 
+function normalizeSectionBudgets(arcSections, targetWords) {
+  const totalMinPct = arcSections.reduce((s, sec) => s + sec.min_pct, 0);
+  const totalMaxPct = arcSections.reduce((s, sec) => s + sec.max_pct, 0);
+
+  if (totalMinPct > 100) {
+    return { error: `Section minimum budgets sum to ${totalMinPct}% (> 100%) — infeasible budget` };
+  }
+  if (totalMaxPct < 100) {
+    return { error: `Section maximum budgets sum to ${totalMaxPct}% (< 100%) — infeasible budget` };
+  }
+
+  // Compute exact min/max word counts (floor for min, ceil for max to be safe)
+  const entries = arcSections.map(s => {
+    const minWords = Math.floor(targetWords * s.min_pct / 100);
+    const maxWords = Math.ceil(targetWords * s.max_pct / 100);
+    const midPct = (s.min_pct + s.max_pct) / 2;
+    const idealTarget = targetWords * midPct / 100;
+    return { ...s, minWords, maxWords, idealTarget };
+  });
+
+  // Largest-remainder method for exact allocation:
+  // 1. Floor each ideal target
+  // 2. Clamp to [minWords, maxWords]
+  // 3. Distribute remaining words by largest fractional remainder
+  let floored = entries.map(e => {
+    const base = Math.floor(e.idealTarget);
+    const clamped = Math.max(e.minWords, Math.min(e.maxWords, base));
+    return { ...e, allocated: clamped, remainder: e.idealTarget - clamped };
+  });
+
+  let totalAllocated = floored.reduce((s, e) => s + e.allocated, 0);
+  let deficit = targetWords - totalAllocated;
+
+  if (deficit > 0) {
+    const sortable = floored.map((e, i) => ({ i, remainder: e.remainder }));
+    sortable.sort((a, b) => b.remainder - a.remainder);
+    while (deficit > 0) {
+      let progress = false;
+      for (const item of sortable) {
+        if (deficit <= 0) break;
+        if (floored[item.i].allocated < floored[item.i].maxWords) {
+          floored[item.i].allocated += 1;
+          deficit -= 1;
+          progress = true;
+        }
+      }
+      if (!progress) break;
+    }
+  } else if (deficit < 0) {
+    const sortable = floored.map((e, i) => ({ i, remainder: e.remainder }));
+    sortable.sort((a, b) => a.remainder - b.remainder);
+    while (deficit < 0) {
+      let progress = false;
+      for (const item of sortable) {
+        if (deficit >= 0) break;
+        if (floored[item.i].allocated > floored[item.i].minWords) {
+          floored[item.i].allocated -= 1;
+          deficit += 1;
+          progress = true;
+        }
+      }
+      if (!progress) break;
+    }
+  }
+
+  // Verify exact sum
+  totalAllocated = floored.reduce((s, e) => s + e.allocated, 0);
+  if (totalAllocated !== targetWords) {
+    return { error: `Budget normalization failed: allocated ${totalAllocated} words but target is ${targetWords} — mathematically infeasible within constraints` };
+  }
+
+  const sections = floored.map(e => ({
+    id: e.id,
+    label: e.label,
+    min_pct: e.min_pct,
+    max_pct: e.max_pct,
+    min_words: e.minWords,
+    max_words: e.maxWords,
+    target_words: e.allocated,
+  }));
+
+  return { sections };
+}
+
 function formatDefaultWords(format) {
   if (!format || !format.word_range) return 3000;
   return Math.round((format.word_range.min + format.word_range.max) / 2);
@@ -115,4 +199,4 @@ function buildInstructions(structure) {
   return lines.join('\n');
 }
 
-export { loadStructure, getWritingPlan, estimateWordsFromDuration, formatDefaultWords };
+export { loadStructure, getWritingPlan, estimateWordsFromDuration, formatDefaultWords, normalizeSectionBudgets };

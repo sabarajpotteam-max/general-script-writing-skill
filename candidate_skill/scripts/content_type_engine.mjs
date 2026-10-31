@@ -156,6 +156,74 @@ const EVIDENCE_STATUS = Object.freeze({
   FABRICATION_SUSPECTED: 'fabrication_suspected',
 });
 
+// FIX 2: Explicit research states — system_assisted is NOT "research completed"
+const RESEARCH_STATES = Object.freeze({
+  NOT_STARTED: 'not_started',
+  RESEARCH_PENDING: 'research_pending',
+  VERIFIED: 'verified',
+  PARTIALLY_VERIFIED: 'partially_verified',
+  UNRESOURCED: 'unresourced',
+  FAILED: 'failed',
+});
+
+// Generation gate: four separate permissions
+function assessGenerationReadiness(m3Resolution, researchState, providerAvailable) {
+  const gates = {
+    brief_accepted: m3Resolution.holds.length === 0,
+    research_ready: researchState === RESEARCH_STATES.VERIFIED ||
+                    researchState === RESEARCH_STATES.PARTIALLY_VERIFIED ||
+                    !m3Resolution.evidence_policy.evidence_required,
+    factual_generation_permitted: false,
+    production_release_permitted: false,
+  };
+
+  if (!m3Resolution.evidence_policy.evidence_required) {
+    gates.factual_generation_permitted = gates.brief_accepted;
+  } else if (researchState === RESEARCH_STATES.VERIFIED) {
+    gates.factual_generation_permitted = gates.brief_accepted;
+  } else if (researchState === RESEARCH_STATES.PARTIALLY_VERIFIED) {
+    gates.factual_generation_permitted = false;
+  } else {
+    gates.factual_generation_permitted = false;
+  }
+
+  // Production never permitted in RESEARCH_ONLY
+  gates.production_release_permitted = false;
+
+  const blockers = [];
+  if (!gates.brief_accepted) blockers.push('Brief has unresolved HOLDs');
+  if (m3Resolution.evidence_policy.evidence_required && researchState === RESEARCH_STATES.NOT_STARTED) {
+    blockers.push('Research not started — factual claims cannot be made without evidence');
+  }
+  if (m3Resolution.evidence_policy.evidence_required && researchState === RESEARCH_STATES.RESEARCH_PENDING) {
+    blockers.push('Research pending — awaiting verified evidence before factual generation');
+  }
+  if (m3Resolution.evidence_policy.evidence_required && researchState === RESEARCH_STATES.UNRESOURCED) {
+    blockers.push('No research provider available — cannot verify factual claims');
+  }
+  if (m3Resolution.evidence_policy.evidence_required && researchState === RESEARCH_STATES.FAILED) {
+    blockers.push('Research failed — cannot proceed with unverified factual claims');
+  }
+  if (researchState === RESEARCH_STATES.PARTIALLY_VERIFIED) {
+    blockers.push('Research partially verified — some claims lack evidence');
+  }
+
+  return Object.freeze({ ...gates, blockers: Object.freeze(blockers) });
+}
+
+function deriveResearchState(brief, researchMode, providerAvailable) {
+  const hasEvidence = Array.isArray(brief.evidence) && brief.evidence.length > 0;
+
+  if (researchMode === RESEARCH_MODES.MINIMAL) return RESEARCH_STATES.NOT_STARTED;
+  if (researchMode === RESEARCH_MODES.CLIENT_PROVIDED && hasEvidence) return RESEARCH_STATES.VERIFIED;
+  if (researchMode === RESEARCH_MODES.CLIENT_PROVIDED && !hasEvidence) return RESEARCH_STATES.NOT_STARTED;
+  if (researchMode === RESEARCH_MODES.SYSTEM_ASSISTED && hasEvidence) return RESEARCH_STATES.PARTIALLY_VERIFIED;
+  if (researchMode === RESEARCH_MODES.SYSTEM_ASSISTED && !hasEvidence) {
+    return providerAvailable ? RESEARCH_STATES.RESEARCH_PENDING : RESEARCH_STATES.UNRESOURCED;
+  }
+  return RESEARCH_STATES.NOT_STARTED;
+}
+
 const SOURCE_TYPES = Object.freeze({
   ACADEMIC: 'academic',
   GOVERNMENT: 'government',
@@ -234,23 +302,89 @@ function createOfflineFixtureProvider(fixtures = []) {
         status: EVIDENCE_STATUS.UNRESOURCED,
         message: `No fixture data for topic "${query.topic}"`,
         records: [],
+        is_live_research: false,
       };
     }
     return {
       success: true,
-      status: EVIDENCE_STATUS.VERIFIED,
-      message: `${matching.length} fixture record(s) found (offline test data — not live research)`,
+      status: EVIDENCE_STATUS.UNVERIFIED,
+      message: `${matching.length} fixture record(s) found (OFFLINE TEST DATA — not live research, not verified evidence)`,
       records: matching.map(f => createEvidenceRecord(f)),
+      is_live_research: false,
     };
   };
   return provider;
 }
 
 // ═══════════════════════════════════════════════════════════════
+// FIX 5: HYBRID CLAIM BOUNDARY TAGGING
+// ═══════════════════════════════════════════════════════════════
+
+const CLAIM_TYPES = Object.freeze({
+  FACTUAL: 'factual_claim',
+  CREATIVE: 'creative_element',
+  AMBIGUOUS: 'ambiguous',
+});
+
+function tagClaim(claimText, options = {}) {
+  const text = (claimText || '').trim();
+  if (!text) return { type: CLAIM_TYPES.AMBIGUOUS, reason: 'empty claim' };
+
+  const factualIndicators = [
+    /\b(?:study|studies|research|data|statistics?|percent|%|survey|report|according to|published|found that|measured|observed)\b/i,
+    /\b(?:in \d{4}|since \d{4}|from \d{4}|between \d{4})\b/i,
+    /\b(?:increased|decreased|grew|declined|rose|fell) by\b/i,
+    /\b(?:caused? by|results? in|leads? to|due to|because of)\b/i,
+  ];
+
+  const creativeIndicators = [
+    /\b(?:imagine|picture this|let's say|what if|suppose|consider a world)\b/i,
+    /\b(?:feels? like|seems? like|as if|metaphorically|figuratively)\b/i,
+    /\b(?:our hero|the protagonist|once upon|in a world where)\b/i,
+  ];
+
+  const factualScore = factualIndicators.filter(r => r.test(text)).length;
+  const creativeScore = creativeIndicators.filter(r => r.test(text)).length;
+
+  if (options.health || options.finance || options.legal || options.safety) {
+    return { type: CLAIM_TYPES.FACTUAL, reason: 'high-risk domain — treated as factual', requires_evidence: true };
+  }
+
+  if (factualScore > 0 && creativeScore === 0) {
+    return { type: CLAIM_TYPES.FACTUAL, reason: 'factual indicators present', requires_evidence: true };
+  }
+  if (creativeScore > 0 && factualScore === 0) {
+    return { type: CLAIM_TYPES.CREATIVE, reason: 'creative indicators present', requires_evidence: false };
+  }
+  if (factualScore > 0 && creativeScore > 0) {
+    return { type: CLAIM_TYPES.FACTUAL, reason: 'mixed indicators — factual takes precedence for safety', requires_evidence: true };
+  }
+
+  return { type: CLAIM_TYPES.AMBIGUOUS, reason: 'no clear indicators — manual review recommended' };
+}
+
+function tagClaimsInSection(claims, sectionContentType, domainFlags = {}) {
+  return claims.map(claim => {
+    if (sectionContentType === CONTENT_TYPES.FACTUAL) {
+      return { ...claim, tag: { type: CLAIM_TYPES.FACTUAL, reason: 'section is factual', requires_evidence: true } };
+    }
+    if (sectionContentType === CONTENT_TYPES.CREATIVE) {
+      const tag = tagClaim(claim.text, domainFlags);
+      if (tag.type === CLAIM_TYPES.FACTUAL) {
+        return { ...claim, tag: { ...tag, reason: 'factual claim in creative section — still requires evidence' } };
+      }
+      return { ...claim, tag: { type: CLAIM_TYPES.CREATIVE, reason: 'creative section element', requires_evidence: false } };
+    }
+    // hybrid — tag each individually
+    return { ...claim, tag: tagClaim(claim.text, domainFlags) };
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
 // UNIFIED M3 RESOLUTION
 // ═══════════════════════════════════════════════════════════════
 
-function resolveM3(brief, resolvedFormat) {
+function resolveM3(brief, resolvedFormat, options = {}) {
   const holds = [];
   const warnings = [];
 
@@ -280,11 +414,28 @@ function resolveM3(brief, resolvedFormat) {
     warnings.push(`No evidence provided for ${contentType} content — system_assisted research will be needed before factual claims can be made`);
   }
 
+  // FIX 2: Research state and generation gating
+  const providerAvailable = options.providerAvailable || false;
+  const researchState = deriveResearchState(brief, researchMode, providerAvailable);
+
+  if (evidencePolicy.evidence_required && researchState === RESEARCH_STATES.UNRESOURCED) {
+    holds.push({
+      type: 'HOLD_NO_EVIDENCE',
+      detail: `Content type "${contentType}" requires evidence but no research provider available (state: unresourced)`,
+    });
+  }
+
   const formatEvReq = resolvedFormat ? resolvedFormat.evidence_requirement : EVIDENCE_REQUIREMENT.MANDATORY;
   const qa_limitations = [];
   if (resolvedFormat && resolvedFormat.id === 'custom') {
     qa_limitations.push('Custom format: section heading and budget checks are NOT validated — structural QA is limited to word count only');
   }
+
+  const generationReadiness = assessGenerationReadiness(
+    { holds, evidence_policy: evidencePolicy },
+    researchState,
+    providerAvailable,
+  );
 
   return {
     content_type: contentType,
@@ -293,6 +444,8 @@ function resolveM3(brief, resolvedFormat) {
     research_mode_source: rmResult.source,
     evidence_policy: evidencePolicy,
     format_evidence_requirement: formatEvReq,
+    research_state: researchState,
+    generation_readiness: generationReadiness,
     holds,
     warnings,
     qa_limitations,
@@ -308,6 +461,8 @@ export {
   EVIDENCE_STATUS,
   EVIDENCE_POLICIES,
   SOURCE_TYPES,
+  RESEARCH_STATES,
+  CLAIM_TYPES,
   inferContentType,
   getEvidencePolicy,
   inferResearchMode,
@@ -316,4 +471,8 @@ export {
   ResearchProvider,
   createOfflineFixtureProvider,
   resolveM3,
+  assessGenerationReadiness,
+  deriveResearchState,
+  tagClaim,
+  tagClaimsInSection,
 };

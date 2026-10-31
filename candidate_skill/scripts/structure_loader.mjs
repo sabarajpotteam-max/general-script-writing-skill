@@ -94,30 +94,75 @@ function normalizeSectionBudgets(arcSections, targetWords) {
     return { error: `Section maximum budgets sum to ${totalMaxPct}% (< 100%) — infeasible budget` };
   }
 
-  const rawTargets = arcSections.map(s => {
+  // Compute exact min/max word counts (floor for min, ceil for max to be safe)
+  const entries = arcSections.map(s => {
+    const minWords = Math.floor(targetWords * s.min_pct / 100);
+    const maxWords = Math.ceil(targetWords * s.max_pct / 100);
     const midPct = (s.min_pct + s.max_pct) / 2;
-    return { ...s, midPct, rawTarget: targetWords * midPct / 100 };
+    const idealTarget = targetWords * midPct / 100;
+    return { ...s, minWords, maxWords, idealTarget };
   });
 
-  const rawSum = rawTargets.reduce((sum, s) => sum + s.rawTarget, 0);
-
-  const sections = rawTargets.map(s => {
-    const minWords = Math.round(targetWords * s.min_pct / 100);
-    const maxWords = Math.round(targetWords * s.max_pct / 100);
-    const scaledTarget = rawSum > 0
-      ? Math.round(s.rawTarget * targetWords / rawSum)
-      : Math.round((minWords + maxWords) / 2);
-    const clampedTarget = Math.max(minWords, Math.min(maxWords, scaledTarget));
-    return {
-      id: s.id,
-      label: s.label,
-      min_pct: s.min_pct,
-      max_pct: s.max_pct,
-      min_words: minWords,
-      max_words: maxWords,
-      target_words: clampedTarget,
-    };
+  // Largest-remainder method for exact allocation:
+  // 1. Floor each ideal target
+  // 2. Clamp to [minWords, maxWords]
+  // 3. Distribute remaining words by largest fractional remainder
+  let floored = entries.map(e => {
+    const base = Math.floor(e.idealTarget);
+    const clamped = Math.max(e.minWords, Math.min(e.maxWords, base));
+    return { ...e, allocated: clamped, remainder: e.idealTarget - clamped };
   });
+
+  let totalAllocated = floored.reduce((s, e) => s + e.allocated, 0);
+  let deficit = targetWords - totalAllocated;
+
+  if (deficit > 0) {
+    const sortable = floored.map((e, i) => ({ i, remainder: e.remainder }));
+    sortable.sort((a, b) => b.remainder - a.remainder);
+    while (deficit > 0) {
+      let progress = false;
+      for (const item of sortable) {
+        if (deficit <= 0) break;
+        if (floored[item.i].allocated < floored[item.i].maxWords) {
+          floored[item.i].allocated += 1;
+          deficit -= 1;
+          progress = true;
+        }
+      }
+      if (!progress) break;
+    }
+  } else if (deficit < 0) {
+    const sortable = floored.map((e, i) => ({ i, remainder: e.remainder }));
+    sortable.sort((a, b) => a.remainder - b.remainder);
+    while (deficit < 0) {
+      let progress = false;
+      for (const item of sortable) {
+        if (deficit >= 0) break;
+        if (floored[item.i].allocated > floored[item.i].minWords) {
+          floored[item.i].allocated -= 1;
+          deficit += 1;
+          progress = true;
+        }
+      }
+      if (!progress) break;
+    }
+  }
+
+  // Verify exact sum
+  totalAllocated = floored.reduce((s, e) => s + e.allocated, 0);
+  if (totalAllocated !== targetWords) {
+    return { error: `Budget normalization failed: allocated ${totalAllocated} words but target is ${targetWords} — mathematically infeasible within constraints` };
+  }
+
+  const sections = floored.map(e => ({
+    id: e.id,
+    label: e.label,
+    min_pct: e.min_pct,
+    max_pct: e.max_pct,
+    min_words: e.minWords,
+    max_words: e.maxWords,
+    target_words: e.allocated,
+  }));
 
   return { sections };
 }
@@ -154,4 +199,4 @@ function buildInstructions(structure) {
   return lines.join('\n');
 }
 
-export { loadStructure, getWritingPlan, estimateWordsFromDuration, formatDefaultWords };
+export { loadStructure, getWritingPlan, estimateWordsFromDuration, formatDefaultWords, normalizeSectionBudgets };

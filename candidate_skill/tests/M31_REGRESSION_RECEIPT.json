@@ -1,0 +1,10 @@
+{
+  "suite": "M3.1 Regression Tests",
+  "status": "RESEARCH_ONLY",
+  "timestamp": "2026-10-31T12:10:59.649Z",
+  "total": 218,
+  "passed": 218,
+  "failed": 0,
+  "failures": [],
+  "disclaimer": "Research-only test execution. Not production-verified."
+}
