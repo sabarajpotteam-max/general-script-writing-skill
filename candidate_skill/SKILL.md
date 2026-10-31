@@ -506,7 +506,7 @@ Client-provided evidence is assigned state `submitted`, not `verified`. The evid
 
 ### FIX 2: Single Authoritative Generation Gate
 
-`generation_permitted` and `generation_readiness.factual_generation_permitted` always agree — both derive from one `assessGenerationReadiness` call that incorporates ALL blocking HOLDs. Research states `research_pending`, `unresourced`, `partially_verified`, and `failed` all block factual generation. Provider available ≠ research complete.
+`generation_permitted` and `generation_readiness.factual_generation_permitted` always agree — both derive from one `assessGenerationReadiness` call that incorporates ALL blocking HOLDs. Research states `submitted`, `research_pending`, `unresourced`, `partially_verified`, and `failed` all block factual generation. Provider available ≠ research complete. (M3.3 corrected: `submitted` added to blocked states.)
 
 ### FIX 3: Simple Client Brief Compatibility
 
@@ -515,6 +515,42 @@ New-style briefs (topic/niche/audience/language/format/duration) no longer requi
 ### FIX 4: Hybrid Claim Safety
 
 Ambiguous statements in creative sections are NOT auto-classified as fictional. They receive type `ambiguous` with `requires_review: true`. Factual claims in creative sections still require evidence. High-risk domain safeguards are preserved. The regex classifier provides indicator-based detection, not semantic fact-checking.
+
+## M3.3 Additions — Final Evidence Trust Gate
+
+### FIX 1: Correct Research Readiness
+
+SUBMITTED evidence is no longer treated as research-ready or sufficient for factual generation. Only VERIFIED evidence (from a trusted verification mechanism) can satisfy the research-ready gate for evidence-required content. The complete state matrix for evidence-required (factual/hybrid/instructional) content:
+
+| State | research_ready | factual_generation_permitted |
+|-------|---------------|------------------------------|
+| `not_started` | false | false |
+| `submitted` | false | false |
+| `research_pending` | false | false |
+| `partially_verified` | false | false |
+| `unresourced` | false | false |
+| `failed` | false | false |
+| `verified` | true | true (if brief_accepted) |
+
+Creative content (evidence not required) bypasses this gate entirely.
+
+### FIX 2: Trustworthy Verification Transition
+
+**Trusted verification mechanism: NOT YET IMPLEMENTED.** No code path in `deriveResearchState` currently returns VERIFIED. Client-provided fields (`verification_status`, `verified`, `is_verified`), the `providerAvailable` flag, and offline fixtures cannot self-certify evidence as verified. A future trusted verifier must provide: claim-level source assessment, provenance verification, and independent corroboration traceable to assessed sources. Until implemented, all evidence-required factual generation remains blocked.
+
+### FIX 3: Separate Workflow Permissions
+
+Four distinct workflow outcomes are maintained:
+- **A. Brief accepted for planning:** `brief_accepted` — no blocking HOLDs
+- **B. Research/evidence preparation allowed:** Briefs pass topic intake for planning regardless of evidence state
+- **C. Verified factual generation permitted:** `factual_generation_permitted` — requires VERIFIED state AND brief_accepted
+- **D. Production release permitted:** `production_release_permitted` — always FALSE (RESEARCH_ONLY)
+
+SUBMITTED evidence supports review and preparation but cannot authorize factual assertions.
+
+### FIX 4: Single Authoritative Gate (strengthened)
+
+All gate outputs derive from one `assessGenerationReadiness` call after ALL holds are collected. The blocker list explicitly explains every blocked state. Gates never contradict: if not `research_ready`, then `factual_generation_permitted` is false; if not `brief_accepted`, then `factual_generation_permitted` is false; `production_release_permitted` is always false.
 
 ## Restrictions
 

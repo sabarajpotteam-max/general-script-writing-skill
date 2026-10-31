@@ -168,11 +168,12 @@ const RESEARCH_STATES = Object.freeze({
 });
 
 // Generation gate: four separate permissions
+// M3.3: Only VERIFIED evidence is research-ready. SUBMITTED means evidence is present
+// but verification is incomplete — it supports planning but not factual generation.
 function assessGenerationReadiness(m3Resolution, researchState, providerAvailable) {
   const gates = {
     brief_accepted: m3Resolution.holds.length === 0,
     research_ready: researchState === RESEARCH_STATES.VERIFIED ||
-                    researchState === RESEARCH_STATES.SUBMITTED ||
                     !m3Resolution.evidence_policy.evidence_required,
     factual_generation_permitted: false,
     production_release_permitted: false,
@@ -181,8 +182,6 @@ function assessGenerationReadiness(m3Resolution, researchState, providerAvailabl
   if (!m3Resolution.evidence_policy.evidence_required) {
     gates.factual_generation_permitted = gates.brief_accepted;
   } else if (researchState === RESEARCH_STATES.VERIFIED) {
-    gates.factual_generation_permitted = gates.brief_accepted;
-  } else if (researchState === RESEARCH_STATES.SUBMITTED) {
     gates.factual_generation_permitted = gates.brief_accepted;
   } else {
     gates.factual_generation_permitted = false;
@@ -194,6 +193,9 @@ function assessGenerationReadiness(m3Resolution, researchState, providerAvailabl
   if (!gates.brief_accepted) blockers.push('Brief has unresolved HOLDs');
   if (m3Resolution.evidence_policy.evidence_required && researchState === RESEARCH_STATES.NOT_STARTED) {
     blockers.push('Research not started — factual claims cannot be made without evidence');
+  }
+  if (m3Resolution.evidence_policy.evidence_required && researchState === RESEARCH_STATES.SUBMITTED) {
+    blockers.push('Evidence submitted but verification is incomplete — factual generation blocked until evidence is independently verified');
   }
   if (m3Resolution.evidence_policy.evidence_required && researchState === RESEARCH_STATES.RESEARCH_PENDING) {
     blockers.push('Research pending — awaiting verified evidence before factual generation');
@@ -211,6 +213,11 @@ function assessGenerationReadiness(m3Resolution, researchState, providerAvailabl
   return Object.freeze({ ...gates, blockers: Object.freeze(blockers) });
 }
 
+// M3.3 FIX 2: No code path here returns VERIFIED. VERIFIED requires a trusted
+// verification mechanism (claim-level source assessment, provenance check, independent
+// corroboration) that is NOT YET IMPLEMENTED. Client-provided fields, boolean flags,
+// and offline fixtures cannot self-certify. Until a trusted verifier exists, factual
+// generation remains blocked for all evidence-required content.
 function deriveResearchState(brief, researchMode, providerAvailable) {
   const hasEvidence = Array.isArray(brief.evidence) && brief.evidence.length > 0;
 
