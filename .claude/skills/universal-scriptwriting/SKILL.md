@@ -771,6 +771,74 @@ Unknown tones, out-of-range formality (not 1–5), and out-of-range humor_level 
 
 ---
 
+## M7: Smart Client Brief Engine — Schema v2.0.0
+
+**Baseline:** 3d2e3c6 (M6 QA + Integration Closure)
+**Module:** `scripts/brief_engine.mjs`
+**Schema:** CLIENT_BRIEF_INPUT_SCHEMA.md v2.0.0
+
+### Brief Schema Overview
+
+| Category | Fields |
+|----------|--------|
+| **Required** | `topic` (3-500 chars), `audience` (default: general_adult), `language` (default: en) |
+| **Recommended** | `format`, `niche`, `sub_niche` |
+| **Optional** | `content_type`, `research_mode`, `target_duration`, `target_words`, `platform`, `objectives`, `voice`, `brand_voice` |
+| **Factual** | `subject`, `object`, `mechanism`, `uncertainty`, `evidence` |
+| **Creative** | `characters`, `setting`, `premise`, `preferred_structure` |
+| **Advanced** | `audience_detailed`, `custom_requirements`, `experimental_techniques`, `custom_format_spec` |
+
+### Smart Defaults System
+
+Resolution order: explicit value → format default → content-type default → universal default
+
+| Format | → Content Type | → Voice Mode | → Tone |
+|--------|---------------|-------------|--------|
+| documentary | factual | single_narrator | authoritative |
+| explainer | factual | single_narrator | conversational |
+| news | factual | single_narrator | formal |
+| tutorial | instructional | single_narrator | conversational |
+| narrative | creative | multi_character | dramatic |
+| screenplay | creative | multi_character | dramatic |
+| podcast_interview | hybrid | host_guest | conversational |
+| short_form | (inferred) | single_narrator | casual |
+
+### Backward Compatibility
+
+- `title` aliased to `topic` (both accepted)
+- Legacy briefs (title/niche/subject/object/mechanism/uncertainty/evidence) fully supported
+- Missing `audience` → "general_adult", missing `language` → "en"
+- Research mode inferred: evidence present → client_provided, absent → system_assisted, creative → minimal
+
+### Cross-Field Validation
+
+| Rule | HOLD Type |
+|------|-----------|
+| Platform vs duration (YouTube Shorts ≤ 3 min) | HOLD_PLATFORM_COMPLIANCE |
+| Adult content + child audience | HOLD_AUDIENCE_RISK |
+| Duration outside format range | HOLD_FORMAT_MISMATCH |
+| Custom format without spec | HOLD_FORMAT_MISMATCH |
+| Brand voice mode without guidelines | HOLD_FORMAT_MISMATCH |
+
+### Provenance Tracking
+
+Every resolved field includes source: `explicit` | `alias` | `format_default` | `inferred` | `universal_default`
+
+### Safety Invariants
+
+- Inferred values explicitly marked — never claimed as "verified"
+- Subject/Object/Mechanism from topic = PROVISIONAL (requires research verification)
+- Unknown content_type defaults to hybrid (safe, not factual)
+- Factual content without evidence → research requirement flagged
+- No invented factual claims during brief normalization
+- Generation readiness blocks on unresolved BLOCKING holds
+
+### Exports
+
+`normalizeBrief`, `BRIEF_SCHEMA_VERSION`, `SUPPORTED_FORMATS`, `SUPPORTED_PLATFORMS`, `FORMAT_DEFAULTS`, `PLATFORM_CONSTRAINTS`, `validateCrossFields`, `assessBriefReadiness`, `resolveLanguage`, `resolveAudience`, `resolvePlatform`, `generateWorkingTitle`, `identifySubjectObjectMechanism`
+
+---
+
 ## Restrictions
 
 - This skill is a RESEARCH_ONLY candidate. It has not been approved for production use.

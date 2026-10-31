@@ -16,6 +16,7 @@ import { resolveM3, CONTENT_TYPES, RESEARCH_MODES, RESEARCH_STATES, inferContent
 import { resolveTargetWords, estimateRuntime, SPEAKING_RATES, SPEAKING_RATE_SET, getSpeakingRate, parseDuration } from "./duration_engine.mjs";
 import { resolveVoiceMode, validateSpeakerLabels, checkBrandVoiceCompliance, countSpokenWordsMultiVoice, VOICE_MODES, VOICE_MODE_SET } from "./voice_engine.mjs";
 import { QA_HOLD_TYPES, HOLD_SEVERITY, QA_RESULT, countCanonicalSpokenWords, runQA } from "./qa_engine.mjs";
+import { normalizeBrief, BRIEF_SCHEMA_VERSION, SUPPORTED_FORMATS, SUPPORTED_PLATFORMS, FORMAT_DEFAULTS, PLATFORM_CONSTRAINTS, validateCrossFields, assessBriefReadiness, resolveLanguage, resolveAudience, resolvePlatform, generateWorkingTitle, identifySubjectObjectMechanism } from "./brief_engine.mjs";
 
 const REGISTERED_NICHES = new Set(["N01", "N02", "N03", "N04", "N05"]);
 const BLOCKED_SOURCES = new Set(["F-190", "R052"]);
@@ -46,6 +47,7 @@ export { CONTENT_TYPES, RESEARCH_MODES, RESEARCH_STATES, inferContentType, infer
 export { SPEAKING_RATES, SPEAKING_RATE_SET, getSpeakingRate, parseDuration, resolveTargetWords, estimateRuntime } from "./duration_engine.mjs";
 export { VOICE_MODES, VOICE_MODE_SET, resolveVoiceMode, validateSpeakerLabels, checkBrandVoiceCompliance, countSpokenWordsMultiVoice } from "./voice_engine.mjs";
 export { QA_HOLD_TYPES, HOLD_SEVERITY, QA_RESULT, countCanonicalSpokenWords, runQA } from "./qa_engine.mjs";
+export { normalizeBrief, BRIEF_SCHEMA_VERSION, SUPPORTED_FORMATS, SUPPORTED_PLATFORMS, FORMAT_DEFAULTS, PLATFORM_CONSTRAINTS, validateCrossFields, assessBriefReadiness, resolveLanguage, resolveAudience, resolvePlatform, generateWorkingTitle, identifySubjectObjectMechanism } from "./brief_engine.mjs";
 
 export function validateInput(input, options = {}) {
   const holds = [];
