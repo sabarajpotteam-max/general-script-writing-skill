@@ -1,0 +1,114 @@
+{
+  "suite": "M5 Multi-Voice Output Engine",
+  "timestamp": "2026-10-31T17:04:06.807Z",
+  "total": 49,
+  "passed": 49,
+  "failed": 0,
+  "failures": [],
+  "demonstrations": [
+    {
+      "description": "Documentary single narrator",
+      "format": "Documentary",
+      "voice_mode": "single_narrator",
+      "labels": [
+        "NARRATOR"
+      ],
+      "target_words": 3000,
+      "sections": [
+        "Hook: 296 words",
+        "Problem: 401 words",
+        "Discovery: 536 words",
+        "Mechanism: 401 words",
+        "Challenge: 401 words",
+        "Resolution: 476 words",
+        "Implications: 297 words",
+        "Outro: 192 words"
+      ],
+      "writing_instructions_includes_voice": true
+    },
+    {
+      "description": "Podcast-style host and guest explainer",
+      "format": "Explainer",
+      "voice_mode": "host_guest",
+      "labels": [
+        "HOST",
+        "GUEST"
+      ],
+      "tone": "conversational",
+      "transitions": [
+        "HOST → GUEST",
+        "GUEST → HOST"
+      ],
+      "target_words": 1700,
+      "sections": [
+        "Hook: 206 words",
+        "Foundation: 291 words",
+        "Build: 376 words",
+        "Example: 291 words",
+        "Nuance: 207 words",
+        "Synthesis: 207 words",
+        "Next Steps: 122 words"
+      ]
+    },
+    {
+      "description": "Multi-character crime drama",
+      "format": "Crime Drama",
+      "voice_mode": "multi_character",
+      "labels": [
+        "DETECTIVE_CHEN",
+        "MAYOR_WILLIAMS",
+        "OFFICER_PARK"
+      ],
+      "tone": "dramatic",
+      "roster": [
+        "DETECTIVE_CHEN (Detective Chen, protagonist)",
+        "MAYOR_WILLIAMS (Mayor Williams, antagonist)",
+        "OFFICER_PARK (Officer Park, supporting)"
+      ],
+      "transitions_count": 6,
+      "target_words": 2000,
+      "sections": [
+        "Opening: 350 words",
+        "Investigation: 700 words",
+        "Confrontation: 600 words",
+        "Resolution: 350 words"
+      ]
+    },
+    {
+      "description": "Formal interview",
+      "format": "Explainer",
+      "voice_mode": "interview",
+      "labels": [
+        "INTERVIEWER",
+        "INTERVIEWEE"
+      ],
+      "tone": "formal",
+      "formality": 4,
+      "target_words": 1500
+    },
+    {
+      "description": "Brand voice corporate short-form",
+      "format": "Short Form",
+      "voice_mode": "brand_voice",
+      "labels": [
+        "NARRATOR"
+      ],
+      "brand_guidelines": "Warm, knowledgeable, slightly irreverent. Like a smart friend.",
+      "keywords_include": [
+        "innovation",
+        "sustainability"
+      ],
+      "keywords_exclude": [
+        "cheap",
+        "discount",
+        "buy now"
+      ],
+      "constraints": [
+        "Follow brand voice guidelines",
+        "Avoid keywords: cheap, discount, buy now",
+        "Include keywords: innovation, sustainability"
+      ],
+      "target_words": 200
+    }
+  ]
+}

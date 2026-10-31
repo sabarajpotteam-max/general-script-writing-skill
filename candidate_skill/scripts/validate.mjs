@@ -14,6 +14,7 @@ import { resolveNiche, isRegisteredNiche, registerNiche, isBuiltinNiche } from "
 import { resolveFormat, getFormatDefinition, isRegisteredFormat, FORMAT_STATUS } from "./format_registry.mjs";
 import { resolveM3, CONTENT_TYPES, RESEARCH_MODES, RESEARCH_STATES, inferContentType, inferResearchMode, getEvidencePolicy, assessGenerationReadiness, deriveResearchState } from "./content_type_engine.mjs";
 import { resolveTargetWords, estimateRuntime, SPEAKING_RATES, SPEAKING_RATE_SET, getSpeakingRate, parseDuration } from "./duration_engine.mjs";
+import { resolveVoiceMode, validateSpeakerLabels, checkBrandVoiceCompliance, countSpokenWordsMultiVoice, VOICE_MODES, VOICE_MODE_SET } from "./voice_engine.mjs";
 
 const REGISTERED_NICHES = new Set(["N01", "N02", "N03", "N04", "N05"]);
 const BLOCKED_SOURCES = new Set(["F-190", "R052"]);
@@ -42,6 +43,7 @@ export { resolveNiche, isRegisteredNiche, registerNiche, isBuiltinNiche } from "
 export { resolveFormat, getFormatDefinition, isRegisteredFormat, FORMAT_STATUS } from "./format_registry.mjs";
 export { CONTENT_TYPES, RESEARCH_MODES, RESEARCH_STATES, inferContentType, inferResearchMode, getEvidencePolicy, resolveM3, assessGenerationReadiness, deriveResearchState } from "./content_type_engine.mjs";
 export { SPEAKING_RATES, SPEAKING_RATE_SET, getSpeakingRate, parseDuration, resolveTargetWords, estimateRuntime } from "./duration_engine.mjs";
+export { VOICE_MODES, VOICE_MODE_SET, resolveVoiceMode, validateSpeakerLabels, checkBrandVoiceCompliance, countSpokenWordsMultiVoice } from "./voice_engine.mjs";
 
 export function validateInput(input, options = {}) {
   const holds = [];
@@ -108,6 +110,22 @@ export function validateInput(input, options = {}) {
   }
   for (const w of wordResolution.warnings) warnings.push(w);
   const target = wordResolution.target_words || 3000;
+
+  // M5 Correction B: Platform hard-limit enforcement
+  if (workingBrief.platform === 'youtube_shorts') {
+    const durationCheck = wordResolution.duration || null;
+    const estimatedSeconds = durationCheck ? durationCheck.seconds : Math.round((target / (wordResolution.speaking_rate ? wordResolution.speaking_rate.wpm : 150)) * 60);
+    if (estimatedSeconds > 180) {
+      holds.push({ type: HOLD_TYPES.MISSING_IDENTITY, detail: `YouTube Shorts maximum 3 minutes (180 seconds) — estimated duration is ${estimatedSeconds} seconds` });
+    }
+  }
+
+  // M5: Voice mode resolution
+  const voiceResolution = resolveVoiceMode(workingBrief, resolvedFormat);
+  if (voiceResolution.error) {
+    holds.push({ type: HOLD_TYPES.MISSING_IDENTITY, detail: voiceResolution.error });
+  }
+  for (const w of voiceResolution.warnings) warnings.push(w);
 
   // M3: Content type and research mode resolution
   const m3Options = {};
@@ -308,6 +326,16 @@ export function validateInput(input, options = {}) {
       format_range: wordResolution.format_range,
       runtime_estimate: estimateRuntime(target, wordResolution.speaking_rate),
     },
+    voice_resolution: voiceResolution.error ? null : {
+      mode: voiceResolution.mode,
+      tone: voiceResolution.tone,
+      formality: voiceResolution.formality,
+      humor_level: voiceResolution.humor_level,
+      speaker_roster: voiceResolution.speaker_roster,
+      labels: voiceResolution.labels,
+      brand_voice: voiceResolution.brand_voice,
+      source: voiceResolution.source,
+    },
     m3_resolution: {
       content_type: contentType,
       content_type_source: m3Result.content_type_source,
@@ -457,14 +485,25 @@ export function analyzeScript(scriptText, input, options = {}) {
   const speakingRate = getSpeakingRate(input.speaking_rate) || getSpeakingRate('standard_narration');
   const narrationRuntime = estimateRuntime(spokenNarrationWords, speakingRate);
 
+  // M5 Correction A: Use resolveTargetWords for duration-aware QA
+  const qaResolvedFormat = options.format || getFormatDefinition(input.format || 'documentary');
+  const qaWordResolution = resolveTargetWords(input, qaResolvedFormat);
+  const resolvedTarget = qaWordResolution.target_words || input.target_words || 3000;
+
+  // M5: Voice-aware QA
+  const voiceRes = options.voiceResolution || resolveVoiceMode(input, qaResolvedFormat);
+  const speakerValidation = voiceRes.error ? null : validateSpeakerLabels(scriptBody, voiceRes);
+  const brandCompliance = voiceRes.brand_voice ? checkBrandVoiceCompliance(scriptBody, voiceRes.brand_voice) : null;
+  const multiVoiceWordCount = voiceRes.error ? null : countSpokenWordsMultiVoice(scriptBody, voiceRes);
+
   return {
     sections: wordCounts,
     total_words: totalWords,
     spoken_narration_words: spokenNarrationWords,
     narration_runtime: narrationRuntime,
-    target_words: input.target_words || 3000,
+    target_words: resolvedTarget,
     word_budget_status: (() => {
-      const tgt = input.target_words || 3000;
+      const tgt = resolvedTarget;
       const fmt = options.format || getFormatDefinition(input.format || 'documentary');
       const tolerance = fmt ? fmt.spoken_word_budget_tolerance : 0.05;
       return spokenNarrationWords >= Math.floor(tgt * (1 - tolerance)) && spokenNarrationWords <= Math.ceil(tgt * (1 + tolerance)) ? "PASS" : "REVIEW";
@@ -475,7 +514,13 @@ export function analyzeScript(scriptText, input, options = {}) {
     subject_consistency: subjectPresent ? "PASS" : "REVIEW",
     object_consistency: objectPresent ? "PASS" : "REVIEW",
     epistemic_upgrades: upgrades,
-    epistemic_integrity: upgrades.length === 0 ? "PASS" : "HOLD_NEEDS_RECHECK"
+    epistemic_integrity: upgrades.length === 0 ? "PASS" : "HOLD_NEEDS_RECHECK",
+    voice_qa: {
+      voice_mode: voiceRes.mode || null,
+      speaker_validation: speakerValidation,
+      brand_compliance: brandCompliance,
+      spoken_word_distribution: multiVoiceWordCount,
+    },
   };
 }
 

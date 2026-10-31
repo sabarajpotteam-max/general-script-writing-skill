@@ -3,6 +3,7 @@
 
 import { getArcTemplate, getFormatDefinition, resolveFormat } from "./format_registry.mjs";
 import { resolveTargetWords, estimateRuntime } from "./duration_engine.mjs";
+import { resolveVoiceMode } from "./voice_engine.mjs";
 
 function loadStructure(brief) {
   const formatResult = resolveFormat(brief);
@@ -50,6 +51,9 @@ function loadStructure(brief) {
   // M4: Runtime estimate from spoken word target
   const runtimeEstimate = estimateRuntime(targetWords, wordResolution.speaking_rate);
 
+  // M5: Voice mode resolution
+  const voiceResolution = resolveVoiceMode(brief, format);
+
   return {
     success: true,
     warning: formatResult.warning || null,
@@ -66,6 +70,7 @@ function loadStructure(brief) {
       target_words: targetWords,
       speaking_rate: wordResolution.speaking_rate,
       runtime_estimate: runtimeEstimate,
+      voice: voiceResolution.error ? null : voiceResolution,
       sections,
     },
   };
@@ -207,6 +212,18 @@ function buildInstructions(structure) {
   lines.push(`Evidence: ${structure.evidence_requirement}`);
   lines.push(`Voice: ${structure.voice_default}`);
   lines.push(`Speaking rate: ${structure.speaking_rate ? structure.speaking_rate.label : 'Standard Narration'} (${structure.speaking_rate ? structure.speaking_rate.wpm : 150} WPM)`);
+  if (structure.voice) {
+    lines.push(`Voice mode: ${structure.voice.mode}`);
+    if (structure.voice.labels.length > 0) {
+      lines.push(`Speaker labels: ${structure.voice.labels.join(', ')}`);
+    }
+    if (structure.voice.tone) {
+      lines.push(`Tone: ${structure.voice.tone}`);
+    }
+    if (structure.voice.brand_voice) {
+      lines.push(`Brand voice: ${structure.voice.brand_voice.guidelines}`);
+    }
+  }
   lines.push(`Target: ~${structure.target_words} words (±${Math.round(structure.spoken_word_budget_tolerance * 100)}% tolerance)`);
   if (structure.runtime_estimate) {
     lines.push(`Estimated runtime: ${structure.runtime_estimate.display}`);

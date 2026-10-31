@@ -607,6 +607,103 @@ The largest-remainder method ensures section word budgets sum **exactly** to the
 - Single authoritative generation gate unchanged
 - Duration calculations do not validate script quality
 
+## M5: Multi-Voice Output Engine
+
+**Baseline:** 02cb84f (M4 Duration & Runtime Intelligence)
+**Module:** `scripts/voice_engine.mjs` (independent, zero dependencies beyond format_registry)
+
+### Voice Modes
+
+| Mode | Labels | Speakers | Description |
+|------|--------|----------|-------------|
+| `single_narrator` | NARRATOR | 1 | Single speaker narration (default) |
+| `host_guest` | HOST, GUEST [, GUEST_2] | 2–3 | Host with one or more guests |
+| `multi_character` | From `characters[]` | 2–20 | Named character dialogue |
+| `interview` | INTERVIEWER, INTERVIEWEE | 2 | Interviewer and interviewee format |
+| `brand_voice` | NARRATOR | 1 | Brand-aware single-speaker narration |
+
+All mode definition objects are `Object.freeze()`-immutable.
+
+### Voice Input Schema
+
+```
+voice: {
+  mode:        <single_narrator|host_guest|multi_character|interview|brand_voice>
+  tone:        <authoritative|conversational|intimate|dramatic|playful|comedic|formal|casual>
+  formality:   <1-5 integer>
+  humor_level: <0-3 integer>
+}
+brand_voice: {
+  guidelines:       <string — required for brand_voice mode>
+  keywords_include:  [<strings>]
+  keywords_exclude:  [<strings>]
+  reference_url:     <string — optional>
+}
+characters: [           (required for multi_character mode, min 2)
+  { name, role, voice_characteristics }
+]
+```
+
+### Voice Resolution Priority
+
+`resolveVoiceMode(brief, resolvedFormat)` follows this priority:
+
+1. **Explicit `voice.mode`** — validated against VOICE_MODE_SET
+2. **Format default** — from `FORMAT_VOICE_DEFAULTS` or format's `voice_default`
+3. **Universal fallback** — `single_narrator`
+
+Unknown tones, out-of-range formality (not 1–5), and out-of-range humor_level (not 0–3) produce warnings and are ignored (not HOLDs).
+
+### Speaker Roster and Labels
+
+- `single_narrator` / `brand_voice`: Fixed labels from mode definition
+- `host_guest`: HOST + GUEST, optionally GUEST_2 when `voice.guest_2` is set or >2 characters
+- `multi_character`: Labels derived from `brief.characters[].name` (uppercased, spaces→underscores)
+- `interview`: Fixed INTERVIEWER + INTERVIEWEE
+- Transitions computed for all multi-speaker modes (A→B, B→A, etc.)
+
+### Brand Voice Compliance
+
+`checkBrandVoiceCompliance(scriptText, brandVoice)` checks:
+- Excluded keywords present in script text → violation
+- Required keywords missing from script text → violation
+- Returns `{ compliant: boolean, violations: [] }`
+
+### Multi-Voice Script QA
+
+`validateSpeakerLabels(scriptText, voiceResolution)` detects:
+- Unrecognized speakers (not in approved roster)
+- Missing required speakers (in roster but not in script)
+- Unlabeled dialogue in multi-voice modes (lines >10 chars without a speaker label)
+- Single-narrator and brand-voice modes allow unlabeled lines
+
+`countSpokenWordsMultiVoice(scriptText, voiceResolution)` provides:
+- Per-speaker word counts
+- Total spoken words (excluding scene directions, headings, table rows)
+- Speaker distribution percentages
+
+### Integration Points
+
+- **validate.mjs:** `voice_resolution` block in validateInput output. Voice QA (`voice_qa`) in analyzeScript output including speaker_validation, brand_compliance, spoken_word_distribution.
+- **structure_loader.mjs:** Voice resolution in loadStructure output. Voice mode, labels, tone, and brand voice in writing instructions.
+- **analyzeScript():** Uses `resolveTargetWords()` for duration-aware word targets (M4 Correction A). Voice QA integrated alongside word budget analysis.
+
+### M4 Corrections Applied
+
+- **Correction A:** `analyzeScript()` now uses `resolveTargetWords()` instead of falling back to `input.target_words || 3000`. Properly handles target_duration-only briefs.
+- **Correction B:** YouTube Shorts platform enforcement: estimated duration >180 seconds produces a HOLD (not just a warning).
+
+### Safety Invariants Preserved
+
+- M3.3 evidence trust gate intact: SUBMITTED still blocks factual generation
+- `production_release_permitted` remains always FALSE
+- Input immutability maintained (shallow copy of brief)
+- Single authoritative generation gate unchanged
+- Duration calculations do not validate script quality
+- Voice mode does not affect research or evidence requirements
+
+---
+
 ## Restrictions
 
 - This skill is a RESEARCH_ONLY candidate. It has not been approved for production use.
