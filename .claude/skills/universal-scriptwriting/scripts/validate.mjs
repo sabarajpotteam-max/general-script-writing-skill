@@ -15,6 +15,7 @@ import { resolveFormat, getFormatDefinition, isRegisteredFormat, FORMAT_STATUS }
 import { resolveM3, CONTENT_TYPES, RESEARCH_MODES, RESEARCH_STATES, inferContentType, inferResearchMode, getEvidencePolicy, assessGenerationReadiness, deriveResearchState } from "./content_type_engine.mjs";
 import { resolveTargetWords, estimateRuntime, SPEAKING_RATES, SPEAKING_RATE_SET, getSpeakingRate, parseDuration } from "./duration_engine.mjs";
 import { resolveVoiceMode, validateSpeakerLabels, checkBrandVoiceCompliance, countSpokenWordsMultiVoice, VOICE_MODES, VOICE_MODE_SET } from "./voice_engine.mjs";
+import { QA_HOLD_TYPES, HOLD_SEVERITY, QA_RESULT, countCanonicalSpokenWords, runQA } from "./qa_engine.mjs";
 
 const REGISTERED_NICHES = new Set(["N01", "N02", "N03", "N04", "N05"]);
 const BLOCKED_SOURCES = new Set(["F-190", "R052"]);
@@ -44,6 +45,7 @@ export { resolveFormat, getFormatDefinition, isRegisteredFormat, FORMAT_STATUS }
 export { CONTENT_TYPES, RESEARCH_MODES, RESEARCH_STATES, inferContentType, inferResearchMode, getEvidencePolicy, resolveM3, assessGenerationReadiness, deriveResearchState } from "./content_type_engine.mjs";
 export { SPEAKING_RATES, SPEAKING_RATE_SET, getSpeakingRate, parseDuration, resolveTargetWords, estimateRuntime } from "./duration_engine.mjs";
 export { VOICE_MODES, VOICE_MODE_SET, resolveVoiceMode, validateSpeakerLabels, checkBrandVoiceCompliance, countSpokenWordsMultiVoice } from "./voice_engine.mjs";
+export { QA_HOLD_TYPES, HOLD_SEVERITY, QA_RESULT, countCanonicalSpokenWords, runQA } from "./qa_engine.mjs";
 
 export function validateInput(input, options = {}) {
   const holds = [];
@@ -496,10 +498,20 @@ export function analyzeScript(scriptText, input, options = {}) {
   const brandCompliance = voiceRes.brand_voice ? checkBrandVoiceCompliance(scriptBody, voiceRes.brand_voice) : null;
   const multiVoiceWordCount = voiceRes.error ? null : countSpokenWordsMultiVoice(scriptBody, voiceRes);
 
+  // M6: Canonical spoken word count via qa_engine
+  const effectiveVoice = voiceRes.error
+    ? { mode: 'single_narrator', labels: ['NARRATOR'] }
+    : voiceRes;
+  const canonicalSpokenWords = countCanonicalSpokenWords(
+    scriptSections.map(s => s.content).join('\n'),
+    effectiveVoice,
+  );
+
   return {
     sections: wordCounts,
     total_words: totalWords,
     spoken_narration_words: spokenNarrationWords,
+    canonical_spoken_words: canonicalSpokenWords,
     narration_runtime: narrationRuntime,
     target_words: resolvedTarget,
     word_budget_status: (() => {

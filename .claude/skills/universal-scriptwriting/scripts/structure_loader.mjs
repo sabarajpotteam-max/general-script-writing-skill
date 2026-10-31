@@ -54,6 +54,19 @@ function loadStructure(brief) {
   // M5: Voice mode resolution
   const voiceResolution = resolveVoiceMode(brief, format);
 
+  // M6: Block on invalid voice configuration
+  if (voiceResolution.error) {
+    return {
+      success: false,
+      hold: {
+        type: 'HOLD_FORMAT_MISMATCH',
+        severity: 'BLOCKING',
+        message: voiceResolution.error,
+      },
+      structure: null,
+    };
+  }
+
   return {
     success: true,
     warning: formatResult.warning || null,
