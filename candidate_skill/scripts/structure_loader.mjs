@@ -2,6 +2,7 @@
 // Status: RESEARCH_ONLY — not approved for production
 
 import { getArcTemplate, getFormatDefinition, resolveFormat } from "./format_registry.mjs";
+import { resolveTargetWords, estimateRuntime } from "./duration_engine.mjs";
 
 function loadStructure(brief) {
   const formatResult = resolveFormat(brief);
@@ -17,11 +18,20 @@ function loadStructure(brief) {
   const format = formatResult.resolved;
   const arc = format.arc;
 
-  const targetWords = brief.target_words
-    ? brief.target_words
-    : brief.target_duration
-      ? estimateWordsFromDuration(brief.target_duration, format)
-      : formatDefaultWords(format);
+  // M4: Unified duration/word-count resolution
+  const wordResolution = resolveTargetWords(brief, format);
+  if (wordResolution.error) {
+    return {
+      success: false,
+      hold: {
+        type: 'HOLD_FORMAT_MISMATCH',
+        severity: 'BLOCKING',
+        message: wordResolution.error,
+      },
+      structure: null,
+    };
+  }
+  const targetWords = wordResolution.target_words;
 
   const budgetResult = normalizeSectionBudgets(arc.sections, targetWords);
   if (budgetResult.error) {
@@ -37,9 +47,13 @@ function loadStructure(brief) {
   }
   const sections = budgetResult.sections;
 
+  // M4: Runtime estimate from spoken word target
+  const runtimeEstimate = estimateRuntime(targetWords, wordResolution.speaking_rate);
+
   return {
     success: true,
     warning: formatResult.warning || null,
+    word_resolution: wordResolution,
     structure: {
       format_id: format.id,
       format_name: format.name,
@@ -50,6 +64,8 @@ function loadStructure(brief) {
       voice_default: format.voice_default,
       spoken_word_budget_tolerance: format.spoken_word_budget_tolerance,
       target_words: targetWords,
+      speaking_rate: wordResolution.speaking_rate,
+      runtime_estimate: runtimeEstimate,
       sections,
     },
   };
@@ -190,7 +206,11 @@ function buildInstructions(structure) {
   lines.push(`Arc: ${structure.arc_name}`);
   lines.push(`Evidence: ${structure.evidence_requirement}`);
   lines.push(`Voice: ${structure.voice_default}`);
+  lines.push(`Speaking rate: ${structure.speaking_rate ? structure.speaking_rate.label : 'Standard Narration'} (${structure.speaking_rate ? structure.speaking_rate.wpm : 150} WPM)`);
   lines.push(`Target: ~${structure.target_words} words (±${Math.round(structure.spoken_word_budget_tolerance * 100)}% tolerance)`);
+  if (structure.runtime_estimate) {
+    lines.push(`Estimated runtime: ${structure.runtime_estimate.display}`);
+  }
   lines.push('');
   lines.push('Sections:');
   for (const s of structure.sections) {

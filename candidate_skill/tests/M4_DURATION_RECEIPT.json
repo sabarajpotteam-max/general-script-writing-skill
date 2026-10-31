@@ -1,0 +1,97 @@
+{
+  "suite": "M4 Flexible Duration & Runtime Intelligence",
+  "timestamp": "2026-10-31T16:46:18.807Z",
+  "total": 57,
+  "passed": 57,
+  "failed": 0,
+  "failures": [],
+  "demonstrations": [
+    {
+      "description": "30-second social media reel",
+      "target_duration": "30 seconds",
+      "speaking_rate": "Standard Narration",
+      "wpm": 150,
+      "target_words": 75,
+      "runtime_estimate": "~30s",
+      "sections": [
+        "Hook: 16 words",
+        "Body: 44 words",
+        "CTA: 15 words"
+      ],
+      "budget_sum": 75
+    },
+    {
+      "description": "10-minute explainer at conversational pace",
+      "target_duration": "10 minutes",
+      "speaking_rate": "Conversational",
+      "wpm": 170,
+      "target_words": 1700,
+      "runtime_estimate": "~10m 0s",
+      "sections": [
+        "Hook: 206 words",
+        "Foundation: 291 words",
+        "Build: 376 words",
+        "Example: 291 words",
+        "Nuance: 207 words",
+        "Synthesis: 207 words",
+        "Next Steps: 122 words"
+      ],
+      "budget_sum": 1700
+    },
+    {
+      "description": "45-minute documentary at deliberate pace",
+      "target_duration": "45 minutes",
+      "speaking_rate": "Deliberate",
+      "wpm": 120,
+      "target_words": 5400,
+      "runtime_estimate": "~45m 0s",
+      "sections": [
+        "Hook: 533 words",
+        "Problem: 722 words",
+        "Discovery: 965 words",
+        "Mechanism: 722 words",
+        "Challenge: 722 words",
+        "Resolution: 857 words",
+        "Implications: 534 words",
+        "Outro: 345 words"
+      ],
+      "budget_sum": 5400
+    },
+    {
+      "description": "2-hour feature documentary at energetic pace",
+      "target_duration": "2 hours",
+      "speaking_rate": "Energetic",
+      "wpm": 190,
+      "target_words": 22800,
+      "runtime_estimate": "~120m 0s",
+      "sections": [
+        "Prologue: 1465 words",
+        "Act One: 5113 words",
+        "Act Two A: 5114 words",
+        "Midpoint: 2264 words",
+        "Act Two B: 3974 words",
+        "Act Three: 3404 words",
+        "Epilogue: 1466 words"
+      ],
+      "budget_sum": 22800
+    },
+    {
+      "description": "Legacy 3000-word documentary (explicit target_words)",
+      "target_words": 3000,
+      "speaking_rate": "Standard Narration",
+      "wpm": 150,
+      "runtime_estimate": "~20m 0s",
+      "sections": [
+        "Hook: 296 words",
+        "Problem: 401 words",
+        "Discovery: 536 words",
+        "Mechanism: 401 words",
+        "Challenge: 401 words",
+        "Resolution: 476 words",
+        "Implications: 297 words",
+        "Outro: 192 words"
+      ],
+      "budget_sum": 3000
+    }
+  ]
+}

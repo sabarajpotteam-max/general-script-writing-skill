@@ -552,6 +552,61 @@ SUBMITTED evidence supports review and preparation but cannot authorize factual 
 
 All gate outputs derive from one `assessGenerationReadiness` call after ALL holds are collected. The blocker list explicitly explains every blocked state. Gates never contradict: if not `research_ready`, then `factual_generation_permitted` is false; if not `brief_accepted`, then `factual_generation_permitted` is false; `production_release_permitted` is always false.
 
+---
+
+## M4: Flexible Duration & Runtime Intelligence
+
+**Baseline:** b119480 (M3.3 Evidence Trust Gate)
+**Module:** `scripts/duration_engine.mjs` (independent, zero dependencies)
+
+### Speaking Rates
+
+| Rate ID | WPM | Use Case |
+|---------|-----|----------|
+| `standard_narration` | 150 | Documentary, explainer (default) |
+| `conversational` | 170 | Casual explainer, podcast-style |
+| `energetic` | 190 | Fast-paced, high-energy |
+| `deliberate` | 120 | Formal, educational, measured |
+
+All rate objects are `Object.freeze()`-immutable.
+
+### Duration Parsing
+
+`parseDuration(input)` accepts: `"30 seconds"`, `"10 minutes"`, `"2 hours"`, `"1.5 hours"`, `"0.5 min"`, `"30 sec"`. Rejects: negative, zero, NaN, Infinity, malformed, >10 hours.
+
+### Word Count Resolution Priority
+
+`resolveTargetWords(brief, resolvedFormat)` follows this strict priority:
+
+1. **Explicit `target_words`** — used as-is if within universal range (50–50,000)
+2. **Computed from `target_duration` + `speaking_rate`** — parsed duration × WPM
+3. **Format default** — midpoint of format's `word_range`
+4. **Universal fallback** — 3,000 words
+
+Out-of-range warnings are added when target exceeds format-specific word range.
+
+### Runtime Estimation
+
+`estimateRuntime(spokenWords, speakingRate)` returns frozen object with: `spoken_words`, `wpm`, `estimated_minutes`, `estimated_seconds`, `display` (e.g. "~20m 0s"), and a note that this is an estimate only.
+
+### Section Budget Reconciliation
+
+The largest-remainder method ensures section word budgets sum **exactly** to the target word count — no rounding drift. Each section is clamped within its arc-defined min/max percentage range.
+
+### Integration Points
+
+- **validate.mjs:** `word_resolution` block in output includes target_words, source, speaking_rate, duration, format_range, and runtime_estimate. Duration engine functions re-exported.
+- **structure_loader.mjs:** Uses `resolveTargetWords` for unified word-count resolution. Includes `speaking_rate` and `runtime_estimate` in structure output.
+- **analyzeScript():** Includes `narration_runtime` computed from spoken narration words excluding metadata.
+
+### Safety Invariants Preserved
+
+- M3.3 evidence trust gate intact: SUBMITTED still blocks factual generation
+- `production_release_permitted` remains always FALSE
+- Input immutability maintained (shallow copy of brief)
+- Single authoritative generation gate unchanged
+- Duration calculations do not validate script quality
+
 ## Restrictions
 
 - This skill is a RESEARCH_ONLY candidate. It has not been approved for production use.

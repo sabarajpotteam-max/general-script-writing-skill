@@ -13,6 +13,7 @@ import { readFileSync } from "node:fs";
 import { resolveNiche, isRegisteredNiche, registerNiche, isBuiltinNiche } from "./niche_resolver.mjs";
 import { resolveFormat, getFormatDefinition, isRegisteredFormat, FORMAT_STATUS } from "./format_registry.mjs";
 import { resolveM3, CONTENT_TYPES, RESEARCH_MODES, RESEARCH_STATES, inferContentType, inferResearchMode, getEvidencePolicy, assessGenerationReadiness, deriveResearchState } from "./content_type_engine.mjs";
+import { resolveTargetWords, estimateRuntime, SPEAKING_RATES, SPEAKING_RATE_SET, getSpeakingRate, parseDuration } from "./duration_engine.mjs";
 
 const REGISTERED_NICHES = new Set(["N01", "N02", "N03", "N04", "N05"]);
 const BLOCKED_SOURCES = new Set(["F-190", "R052"]);
@@ -40,6 +41,7 @@ const HOLD_TYPES = {
 export { resolveNiche, isRegisteredNiche, registerNiche, isBuiltinNiche } from "./niche_resolver.mjs";
 export { resolveFormat, getFormatDefinition, isRegisteredFormat, FORMAT_STATUS } from "./format_registry.mjs";
 export { CONTENT_TYPES, RESEARCH_MODES, RESEARCH_STATES, inferContentType, inferResearchMode, getEvidencePolicy, resolveM3, assessGenerationReadiness, deriveResearchState } from "./content_type_engine.mjs";
+export { SPEAKING_RATES, SPEAKING_RATE_SET, getSpeakingRate, parseDuration, resolveTargetWords, estimateRuntime } from "./duration_engine.mjs";
 
 export function validateInput(input, options = {}) {
   const holds = [];
@@ -99,23 +101,13 @@ export function validateInput(input, options = {}) {
   }
   const resolvedFormat = formatResult.resolved;
 
-  // Correction 6: Validate target_words when present
-  if (workingBrief.target_words !== undefined && workingBrief.target_words !== null) {
-    const tw = workingBrief.target_words;
-    if (typeof tw !== 'number' || !Number.isFinite(tw) || tw !== Math.floor(tw) || tw <= 0) {
-      holds.push({ type: HOLD_TYPES.MISSING_IDENTITY, detail: `target_words must be a positive integer, got: ${JSON.stringify(tw)}` });
-    }
+  // M4: Unified duration/word-count resolution
+  const wordResolution = resolveTargetWords(workingBrief, resolvedFormat);
+  if (wordResolution.error) {
+    holds.push({ type: HOLD_TYPES.MISSING_IDENTITY, detail: wordResolution.error });
   }
-
-  // Word target: use format-specific range when available
-  const target = (typeof workingBrief.target_words === 'number' && Number.isFinite(workingBrief.target_words) && workingBrief.target_words > 0)
-    ? workingBrief.target_words : 3000;
-  const fmtRange = resolvedFormat ? resolvedFormat.word_range : null;
-  if (fmtRange && (target < fmtRange.min || target > fmtRange.max)) {
-    warnings.push(`Target word count ${target} outside ${resolvedFormat.id} range ${fmtRange.min}-${fmtRange.max}`);
-  } else if (!fmtRange && (target < 2500 || target > 8000)) {
-    warnings.push(`Target word count ${target} outside recommended range 2500-8000`);
-  }
+  for (const w of wordResolution.warnings) warnings.push(w);
+  const target = wordResolution.target_words || 3000;
 
   // M3: Content type and research mode resolution
   const m3Options = {};
@@ -307,6 +299,15 @@ export function validateInput(input, options = {}) {
       spoken_word_budget_tolerance: resolvedFormat.spoken_word_budget_tolerance,
     } : null,
     provisional_title: provisionalTitle !== input.title ? provisionalTitle : undefined,
+    word_resolution: {
+      target_words: target,
+      source: wordResolution.source,
+      speaking_rate: wordResolution.speaking_rate ? wordResolution.speaking_rate.id : 'standard_narration',
+      speaking_rate_wpm: wordResolution.speaking_rate ? wordResolution.speaking_rate.wpm : 150,
+      duration: wordResolution.duration || null,
+      format_range: wordResolution.format_range,
+      runtime_estimate: estimateRuntime(target, wordResolution.speaking_rate),
+    },
     m3_resolution: {
       content_type: contentType,
       content_type_source: m3Result.content_type_source,
@@ -452,10 +453,15 @@ export function analyzeScript(scriptText, input, options = {}) {
     }
   }
 
+  // M4: Compute runtime estimate from actual narration words
+  const speakingRate = getSpeakingRate(input.speaking_rate) || getSpeakingRate('standard_narration');
+  const narrationRuntime = estimateRuntime(spokenNarrationWords, speakingRate);
+
   return {
     sections: wordCounts,
     total_words: totalWords,
     spoken_narration_words: spokenNarrationWords,
+    narration_runtime: narrationRuntime,
     target_words: input.target_words || 3000,
     word_budget_status: (() => {
       const tgt = input.target_words || 3000;
