@@ -457,22 +457,25 @@ The Stage 8 report as specified above.
 
 ## M3.1 Additions — Safety Patch
 
-### Simple Client Briefs (FIX 3)
+### Simple Client Briefs (FIX 3, updated M3.2)
 
-New-style briefs require only `title`, `niche`, and `topic` (plus optional `audience`, `language`, `format`, `duration`, `objectives`). The legacy fields `subject`, `object`, `mechanism` are not required when `topic` is present. If `uncertainty` is omitted, it defaults to `"qualified"`.
+New-style briefs require only `niche` and `topic` (plus optional `title`, `audience`, `language`, `format`, `duration`, `objectives`). Title is no longer required — if omitted, a provisional title `[Provisional] <topic>` is derived internally. The legacy fields `subject`, `object`, `mechanism` are not required when `topic` is present. If `uncertainty` is omitted, it defaults to `"qualified"`. The original input object is never mutated — all defaults are applied to an internal working copy.
 
-### Research States (FIX 2)
+### Research States (FIX 2, updated M3.2)
 
 Each brief is assigned a research state reflecting evidence readiness:
 
 | State | Meaning |
 |-------|---------|
 | `not_started` | No research initiated (minimal mode, or client_provided with no evidence) |
+| `submitted` | Client-provided evidence present but not independently verified (M3.2) |
 | `research_pending` | System-assisted research needed, provider available |
-| `verified` | Client-provided evidence present and accepted |
+| `verified` | Evidence independently verified (NOT from client_provided alone) |
 | `partially_verified` | System-assisted mode with some evidence present |
 | `unresourced` | System-assisted research needed but no provider available |
 | `failed` | Research attempted but failed |
+
+**M3.2 correction:** Client-provided evidence is assigned `submitted`, not `verified`. Evidence present ≠ evidence verified. The verification pipeline is: submitted → schema validated → provenance assessed → independently verified → rights cleared. Each step is separate.
 
 ### Generation Readiness Gates (FIX 2)
 
@@ -494,6 +497,24 @@ Section word budgets are computed using the largest-remainder method to guarante
 ### Hybrid Claim Boundaries (FIX 5)
 
 Individual claims within hybrid content are tagged as `factual_claim`, `creative_element`, or `ambiguous` using indicator-based detection. High-risk domains (health, finance, legal, safety) force all claims to `factual_claim` regardless of indicators. Mixed indicators resolve to `factual_claim` (safety-first).
+
+## M3.2 Additions — Final Safety & Consistency Gate
+
+### FIX 1: Evidence Submission vs Verification (SUBMITTED state)
+
+Client-provided evidence is assigned state `submitted`, not `verified`. The evidence verification pipeline has five distinct stages — submitted, schema validated, provenance assessed, independently verified, rights cleared — and each must be assessed separately. Offline fixture evidence is also `submitted`, never `verified`.
+
+### FIX 2: Single Authoritative Generation Gate
+
+`generation_permitted` and `generation_readiness.factual_generation_permitted` always agree — both derive from one `assessGenerationReadiness` call that incorporates ALL blocking HOLDs. Research states `research_pending`, `unresourced`, `partially_verified`, and `failed` all block factual generation. Provider available ≠ research complete.
+
+### FIX 3: Simple Client Brief Compatibility
+
+New-style briefs (topic/niche/audience/language/format/duration) no longer require `title`. A provisional title is derived internally from the topic. The original input object is never mutated — a shallow copy (`workingBrief`) receives all defaults. Legacy briefs (subject/object/mechanism) preserve existing title-required behavior.
+
+### FIX 4: Hybrid Claim Safety
+
+Ambiguous statements in creative sections are NOT auto-classified as fictional. They receive type `ambiguous` with `requires_review: true`. Factual claims in creative sections still require evidence. High-risk domain safeguards are preserved. The regex classifier provides indicator-based detection, not semantic fact-checking.
 
 ## Restrictions
 

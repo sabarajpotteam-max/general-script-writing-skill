@@ -72,8 +72,8 @@ console.log("--- FIX 2: deriveResearchState ---");
 
   assert(deriveResearchState(brief_no_ev, RESEARCH_MODES.MINIMAL, false) === RESEARCH_STATES.NOT_STARTED,
     "R2-010: minimal + no evidence → NOT_STARTED");
-  assert(deriveResearchState(brief_with_ev, RESEARCH_MODES.CLIENT_PROVIDED, false) === RESEARCH_STATES.VERIFIED,
-    "R2-011: client_provided + evidence → VERIFIED");
+  assert(deriveResearchState(brief_with_ev, RESEARCH_MODES.CLIENT_PROVIDED, false) === RESEARCH_STATES.SUBMITTED,
+    "R2-011: client_provided + evidence → SUBMITTED (M3.2: evidence present but not independently verified)");
   assert(deriveResearchState(brief_no_ev, RESEARCH_MODES.CLIENT_PROVIDED, false) === RESEARCH_STATES.NOT_STARTED,
     "R2-012: client_provided + no evidence → NOT_STARTED");
   assert(deriveResearchState(brief_with_ev, RESEARCH_MODES.SYSTEM_ASSISTED, false) === RESEARCH_STATES.PARTIALLY_VERIFIED,
@@ -421,8 +421,8 @@ console.log("--- FIX 2+3 Combined: Safety Gate via validateInput ---");
   const result = validateInput(brief);
   assert(result.m3_resolution.research_mode === "client_provided",
     "R23-006: Factual with evidence → client_provided");
-  assert(result.m3_resolution.research_state === RESEARCH_STATES.VERIFIED,
-    "R23-007: client_provided with evidence → VERIFIED");
+  assert(result.m3_resolution.research_state === RESEARCH_STATES.SUBMITTED,
+    "R23-007: client_provided with evidence → SUBMITTED (M3.2: client evidence is submitted, not verified)");
 }
 
 // ========================================================================

@@ -41,29 +41,34 @@ export { resolveNiche, isRegisteredNiche, registerNiche, isBuiltinNiche } from "
 export { resolveFormat, getFormatDefinition, isRegisteredFormat, FORMAT_STATUS } from "./format_registry.mjs";
 export { CONTENT_TYPES, RESEARCH_MODES, RESEARCH_STATES, inferContentType, inferResearchMode, getEvidencePolicy, resolveM3, assessGenerationReadiness, deriveResearchState } from "./content_type_engine.mjs";
 
-export function validateInput(input) {
+export function validateInput(input, options = {}) {
   const holds = [];
   const warnings = [];
   const evidence_register = [];
 
+  // Never mutate the original user input — work on a shallow copy for defaults
+  const workingBrief = { ...input };
+
   // Stage 1: Topic Intake
-  // FIX 3: Support new-style briefs (topic + niche + audience + language + format + duration)
-  // Legacy briefs require subject/object/mechanism/uncertainty.
-  // New-style briefs require topic + niche; subject/object/mechanism/uncertainty are derived or optional.
-  const isNewStyleBrief = !!input.topic && !input.subject && !input.object && !input.mechanism;
+  const isNewStyleBrief = !!workingBrief.topic && !workingBrief.subject && !workingBrief.object && !workingBrief.mechanism;
   let missing;
+  let provisionalTitle = workingBrief.title || null;
   if (isNewStyleBrief) {
-    const newRequired = ["title", "niche", "topic"];
-    missing = newRequired.filter(f => !input[f]);
+    const newRequired = ["niche", "topic"];
+    missing = newRequired.filter(f => !workingBrief[f]);
     if (missing.length > 0) {
       holds.push({ type: HOLD_TYPES.MISSING_IDENTITY, detail: `Missing fields: ${missing.join(", ")}` });
     }
-    if (!input.uncertainty) {
-      input.uncertainty = input.uncertainty || "qualified";
+    if (!workingBrief.title) {
+      provisionalTitle = `[Provisional] ${workingBrief.topic}`;
+      workingBrief.title = provisionalTitle;
+    }
+    if (!workingBrief.uncertainty) {
+      workingBrief.uncertainty = "qualified";
     }
   } else {
     const legacyRequired = ["title", "niche", "subject", "object", "mechanism", "uncertainty"];
-    missing = legacyRequired.filter(f => !input[f]);
+    missing = legacyRequired.filter(f => !workingBrief[f]);
     if (missing.length > 0) {
       holds.push({ type: HOLD_TYPES.MISSING_IDENTITY, detail: `Missing fields: ${missing.join(", ")}` });
     }
@@ -71,21 +76,21 @@ export function validateInput(input) {
 
   // Dynamic niche resolution (M1: replaces hardcoded 5-niche restriction)
   let nicheResolution = null;
-  if (input.niche) {
-    nicheResolution = resolveNiche(input.niche);
+  if (workingBrief.niche) {
+    nicheResolution = resolveNiche(workingBrief.niche);
     if (!nicheResolution.validation.valid) {
-      holds.push({ type: HOLD_TYPES.MISSING_IDENTITY, detail: `Invalid niche: ${input.niche} — ${nicheResolution.validation.error}` });
+      holds.push({ type: HOLD_TYPES.MISSING_IDENTITY, detail: `Invalid niche: ${workingBrief.niche} — ${nicheResolution.validation.error}` });
     }
     if (nicheResolution.high_stakes) {
-      holds.push({ type: HOLD_TYPES.REVIEW, detail: `High-stakes niche "${input.niche}" flagged for review — domain involves elevated risk` });
+      holds.push({ type: HOLD_TYPES.REVIEW, detail: `High-stakes niche "${workingBrief.niche}" flagged for review — domain involves elevated risk` });
     }
     if (nicheResolution.requires_review && !nicheResolution.high_stakes) {
-      holds.push({ type: HOLD_TYPES.REVIEW, detail: `Custom niche "${input.niche}" requires review — custom adapters must be verified before production use` });
+      holds.push({ type: HOLD_TYPES.REVIEW, detail: `Custom niche "${workingBrief.niche}" requires review — custom adapters must be verified before production use` });
     }
   }
 
   // M2: Format resolution — legacy briefs default to documentary
-  const formatResult = resolveFormat(input);
+  const formatResult = resolveFormat(workingBrief);
   if (formatResult.hold) {
     holds.push({ type: formatResult.hold.type, detail: formatResult.hold.message });
   }
@@ -95,16 +100,16 @@ export function validateInput(input) {
   const resolvedFormat = formatResult.resolved;
 
   // Correction 6: Validate target_words when present
-  if (input.target_words !== undefined && input.target_words !== null) {
-    const tw = input.target_words;
+  if (workingBrief.target_words !== undefined && workingBrief.target_words !== null) {
+    const tw = workingBrief.target_words;
     if (typeof tw !== 'number' || !Number.isFinite(tw) || tw !== Math.floor(tw) || tw <= 0) {
       holds.push({ type: HOLD_TYPES.MISSING_IDENTITY, detail: `target_words must be a positive integer, got: ${JSON.stringify(tw)}` });
     }
   }
 
   // Word target: use format-specific range when available
-  const target = (typeof input.target_words === 'number' && Number.isFinite(input.target_words) && input.target_words > 0)
-    ? input.target_words : 3000;
+  const target = (typeof workingBrief.target_words === 'number' && Number.isFinite(workingBrief.target_words) && workingBrief.target_words > 0)
+    ? workingBrief.target_words : 3000;
   const fmtRange = resolvedFormat ? resolvedFormat.word_range : null;
   if (fmtRange && (target < fmtRange.min || target > fmtRange.max)) {
     warnings.push(`Target word count ${target} outside ${resolvedFormat.id} range ${fmtRange.min}-${fmtRange.max}`);
@@ -113,7 +118,9 @@ export function validateInput(input) {
   }
 
   // M3: Content type and research mode resolution
-  const m3Result = resolveM3(input, resolvedFormat);
+  const m3Options = {};
+  if (options.providerAvailable !== undefined) m3Options.providerAvailable = options.providerAvailable;
+  const m3Result = resolveM3(workingBrief, resolvedFormat, m3Options);
   for (const h of m3Result.holds) holds.push(h);
   for (const w of m3Result.warnings) warnings.push(w);
   const contentType = m3Result.content_type;
@@ -121,7 +128,7 @@ export function validateInput(input) {
   const evidencePolicy = m3Result.evidence_policy;
 
   // Stage 2: Evidence Validation (conditional on content type)
-  const evidence = input.evidence || [];
+  const evidence = workingBrief.evidence || [];
   if (evidence.length === 0 && evidencePolicy.evidence_required && researchMode !== 'system_assisted') {
     holds.push({ type: HOLD_TYPES.UNVERIFIED_FACT, detail: `No evidence items provided — ${contentType} content requires at least one evidence source` });
   } else if (evidence.length === 0 && evidencePolicy.evidence_required && researchMode === 'system_assisted') {
@@ -191,8 +198,8 @@ export function validateInput(input) {
   }
 
   // Niche-specific validation
-  const niche = (input.niche || "").toUpperCase();
-  const ctx = input.niche_context || {};
+  const niche = (workingBrief.niche || "").toUpperCase();
+  const ctx = workingBrief.niche_context || {};
 
   if (niche === "N01") {
     if (!ctx.issued_at || !ctx.valid_until || !ctx.reference_time) {
@@ -258,9 +265,9 @@ export function validateInput(input) {
   }
 
   // Title premise check
-  if (input.title && input.uncertainty && input.uncertainty !== "confirmed") {
+  if (workingBrief.title && workingBrief.uncertainty && workingBrief.uncertainty !== "confirmed") {
     const overconfident = ["confirmed", "proven", "destroyed", "guaranteed", "verified"];
-    const titleLower = input.title.toLowerCase();
+    const titleLower = workingBrief.title.toLowerCase();
     for (const word of overconfident) {
       if (titleLower.includes(word)) {
         holds.push({ type: HOLD_TYPES.TITLE_PREMISE, detail: `Title contains "${word}" but uncertainty is "${input.uncertainty}"` });
@@ -269,12 +276,19 @@ export function validateInput(input) {
     }
   }
 
-  if (input.request_release) {
+  if (workingBrief.request_release) {
     holds.push({ type: HOLD_TYPES.NOT_APPROVED, detail: "request_release is set — candidate output is non-production and cannot be released" });
   }
-  if (input.request_claude_transfer) {
+  if (workingBrief.request_claude_transfer) {
     holds.push({ type: HOLD_TYPES.NOT_APPROVED, detail: "request_claude_transfer is set — transfer of candidate material is restricted" });
   }
+
+  // FIX 2 (M3.2): Single authoritative generation gate — recompute with ALL holds
+  const finalReadiness = assessGenerationReadiness(
+    { holds, evidence_policy: evidencePolicy },
+    m3Result.research_state,
+    m3Options.providerAvailable || false,
+  );
 
   const status = holds.length === 0 ? "PASS" : "HOLD";
   return {
@@ -292,6 +306,7 @@ export function validateInput(input) {
       evidence_requirement: resolvedFormat.evidence_requirement,
       spoken_word_budget_tolerance: resolvedFormat.spoken_word_budget_tolerance,
     } : null,
+    provisional_title: provisionalTitle !== input.title ? provisionalTitle : undefined,
     m3_resolution: {
       content_type: contentType,
       content_type_source: m3Result.content_type_source,
@@ -299,9 +314,9 @@ export function validateInput(input) {
       research_mode_source: m3Result.research_mode_source,
       evidence_policy: evidencePolicy.description,
       research_state: m3Result.research_state,
-      generation_readiness: m3Result.generation_readiness,
+      generation_readiness: finalReadiness,
       qa_limitations: m3Result.qa_limitations,
-      generation_permitted: m3Result.generation_permitted && holds.length === 0,
+      generation_permitted: finalReadiness.factual_generation_permitted,
     },
     stages: {
       topic_intake: missing.length === 0 ? "PASS" : "HOLD",

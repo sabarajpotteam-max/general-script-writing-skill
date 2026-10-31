@@ -1,0 +1,14 @@
+{
+  "suite": "M3.2 Final Safety & Consistency Gate",
+  "timestamp": "2026-10-31T15:49:20.121Z",
+  "total": 35,
+  "passed": 35,
+  "failed": 0,
+  "failures": [],
+  "covers": [
+    "FIX 1: Evidence SUBMITTED not VERIFIED",
+    "FIX 2: Single authoritative generation gate",
+    "FIX 3: Simple client brief compatibility + input immutability",
+    "FIX 4: Hybrid claim safety — AMBIGUOUS with requires_review"
+  ]
+}

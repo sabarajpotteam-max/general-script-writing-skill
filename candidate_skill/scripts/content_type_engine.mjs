@@ -159,6 +159,7 @@ const EVIDENCE_STATUS = Object.freeze({
 // FIX 2: Explicit research states — system_assisted is NOT "research completed"
 const RESEARCH_STATES = Object.freeze({
   NOT_STARTED: 'not_started',
+  SUBMITTED: 'submitted',
   RESEARCH_PENDING: 'research_pending',
   VERIFIED: 'verified',
   PARTIALLY_VERIFIED: 'partially_verified',
@@ -171,7 +172,7 @@ function assessGenerationReadiness(m3Resolution, researchState, providerAvailabl
   const gates = {
     brief_accepted: m3Resolution.holds.length === 0,
     research_ready: researchState === RESEARCH_STATES.VERIFIED ||
-                    researchState === RESEARCH_STATES.PARTIALLY_VERIFIED ||
+                    researchState === RESEARCH_STATES.SUBMITTED ||
                     !m3Resolution.evidence_policy.evidence_required,
     factual_generation_permitted: false,
     production_release_permitted: false,
@@ -181,13 +182,12 @@ function assessGenerationReadiness(m3Resolution, researchState, providerAvailabl
     gates.factual_generation_permitted = gates.brief_accepted;
   } else if (researchState === RESEARCH_STATES.VERIFIED) {
     gates.factual_generation_permitted = gates.brief_accepted;
-  } else if (researchState === RESEARCH_STATES.PARTIALLY_VERIFIED) {
-    gates.factual_generation_permitted = false;
+  } else if (researchState === RESEARCH_STATES.SUBMITTED) {
+    gates.factual_generation_permitted = gates.brief_accepted;
   } else {
     gates.factual_generation_permitted = false;
   }
 
-  // Production never permitted in RESEARCH_ONLY
   gates.production_release_permitted = false;
 
   const blockers = [];
@@ -215,7 +215,7 @@ function deriveResearchState(brief, researchMode, providerAvailable) {
   const hasEvidence = Array.isArray(brief.evidence) && brief.evidence.length > 0;
 
   if (researchMode === RESEARCH_MODES.MINIMAL) return RESEARCH_STATES.NOT_STARTED;
-  if (researchMode === RESEARCH_MODES.CLIENT_PROVIDED && hasEvidence) return RESEARCH_STATES.VERIFIED;
+  if (researchMode === RESEARCH_MODES.CLIENT_PROVIDED && hasEvidence) return RESEARCH_STATES.SUBMITTED;
   if (researchMode === RESEARCH_MODES.CLIENT_PROVIDED && !hasEvidence) return RESEARCH_STATES.NOT_STARTED;
   if (researchMode === RESEARCH_MODES.SYSTEM_ASSISTED && hasEvidence) return RESEARCH_STATES.PARTIALLY_VERIFIED;
   if (researchMode === RESEARCH_MODES.SYSTEM_ASSISTED && !hasEvidence) {
@@ -360,7 +360,7 @@ function tagClaim(claimText, options = {}) {
     return { type: CLAIM_TYPES.FACTUAL, reason: 'mixed indicators — factual takes precedence for safety', requires_evidence: true };
   }
 
-  return { type: CLAIM_TYPES.AMBIGUOUS, reason: 'no clear indicators — manual review recommended' };
+  return { type: CLAIM_TYPES.AMBIGUOUS, reason: 'no clear indicators — manual review recommended', requires_review: true };
 }
 
 function tagClaimsInSection(claims, sectionContentType, domainFlags = {}) {
@@ -372,6 +372,9 @@ function tagClaimsInSection(claims, sectionContentType, domainFlags = {}) {
       const tag = tagClaim(claim.text, domainFlags);
       if (tag.type === CLAIM_TYPES.FACTUAL) {
         return { ...claim, tag: { ...tag, reason: 'factual claim in creative section — still requires evidence' } };
+      }
+      if (tag.type === CLAIM_TYPES.AMBIGUOUS) {
+        return { ...claim, tag: { type: CLAIM_TYPES.AMBIGUOUS, reason: 'ambiguous claim in creative section — review required before treating as fictional', requires_evidence: false, requires_review: true } };
       }
       return { ...claim, tag: { type: CLAIM_TYPES.CREATIVE, reason: 'creative section element', requires_evidence: false } };
     }
@@ -449,7 +452,7 @@ function resolveM3(brief, resolvedFormat, options = {}) {
     holds,
     warnings,
     qa_limitations,
-    generation_permitted: holds.length === 0,
+    generation_permitted: generationReadiness.factual_generation_permitted,
   };
 }
 
