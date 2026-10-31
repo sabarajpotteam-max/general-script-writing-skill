@@ -704,6 +704,73 @@ Unknown tones, out-of-range formality (not 1–5), and out-of-range humor_level 
 
 ---
 
+## M6: QA Generalization — Modular 8-Stage Pipeline
+
+**Baseline:** 6169734 (M5 Multi-Voice Output Engine)
+**Module:** `scripts/qa_engine.mjs` (imports from duration_engine, voice_engine, format_registry, niche_resolver, content_type_engine)
+
+### QA Pipeline Stages
+
+| Stage | Name | Purpose |
+|-------|------|---------|
+| A | Structural | Section count, order, word budget tolerance, per-section budget |
+| B | Content | Canonical term consistency, voice consistency, speakability, anti-AI patterns |
+| C | Evidence | Traceability, epistemic integrity, source rights, fiction frame |
+| D | Format-Specific | Documentary evidence in key sections, short-form CTA/duration, explainer citations |
+| E | Niche-Specific | Tier 1 niche-specific checks (N01 agency attribution, N05 study citations), Tier 2/3 universal |
+| F | Hold Evaluation | Aggregates all holds, detects medical/legal/financial claims in factual content |
+| G | Editorial Revision | Prioritizes and limits revision suggestions across stages A-E |
+| H | QA Report | Compact (short-form) or detailed report with verdict, stage statuses, hold register |
+
+### QA Result States
+
+- `PASS` — all stages clear
+- `REVIEW` — advisory findings, no blocking holds
+- `HOLD` — blocking holds present
+- `NOT_EVALUATED` — stage skipped (e.g., no format, creative content for evidence)
+
+### HOLD Types (20 total)
+
+12 original: MISSING_IDENTITY, RIGHTS, DISPUTED_PROVENANCE, ORIGINAL_MISSING, SOURCE_ROLE, UNVERIFIED_FACT, STALE_FORECAST, TITLE_PREMISE, HARM, REVIEW, NOT_APPROVED, NEEDS_RECHECK
+
+8 new: FORMAT_MISMATCH (ADVISORY), AUDIENCE_RISK, PLATFORM_COMPLIANCE (ADVISORY), DOMAIN_UNKNOWN, CULTURAL_SENSITIVITY, LEGAL_CLAIM, MEDICAL_CLAIM, FINANCIAL_CLAIM
+
+### HOLD Severity
+
+- **BLOCKING**: All except FORMAT_MISMATCH and PLATFORM_COMPLIANCE
+- **ADVISORY**: FORMAT_MISMATCH, PLATFORM_COMPLIANCE (produce REVIEW verdict, not HOLD)
+
+### Canonical Spoken Word Counter
+
+`countCanonicalSpokenWords(text, voiceResolution)` provides:
+- Total spoken words excluding scene directions, headings, tables, bold labels
+- Per-speaker word counts and distribution percentages
+- Multi-voice: only labeled lines counted; single-narrator/brand_voice: all content lines counted
+
+### M5 Integration Corrections
+
+- **Canonical counter:** `analyzeScript()` now includes `canonical_spoken_words` from `countCanonicalSpokenWords`
+- **Voice config blocking:** `structure_loader.mjs` now returns HOLD on invalid voice configuration (previously passed through with null)
+- **Speaker validation scoping:** QA Stage B scopes speaker validation to voice resolution context
+
+### Entry Points
+
+- `runQA(scriptText, brief, options)` — runs full A-H pipeline, returns `{ stages, report, canonical_word_count }`
+- Individual stages exported for targeted QA
+- Re-exported through `validate.mjs`: `QA_HOLD_TYPES`, `HOLD_SEVERITY`, `QA_RESULT`, `countCanonicalSpokenWords`, `runQA`
+
+### Safety Invariants Preserved
+
+- M3.3 evidence trust gate intact: SUBMITTED still blocks factual generation
+- `production_release_permitted` remains always FALSE
+- Input immutability maintained (shallow copy)
+- Single authoritative generation gate unchanged
+- ResearchProvider offline fixtures never interpreted as verified evidence
+- Duration calculations do not validate script quality
+- No K-series research proposal auto-approved
+
+---
+
 ## Restrictions
 
 - This skill is a RESEARCH_ONLY candidate. It has not been approved for production use.
