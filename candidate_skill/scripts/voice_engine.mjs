@@ -54,10 +54,20 @@ const VALID_TONES = Object.freeze([
 const TONE_SET = new Set(VALID_TONES);
 
 const FORMAT_VOICE_DEFAULTS = Object.freeze({
-  documentary: 'single_narrator',
-  explainer: 'single_narrator',
-  short_form: 'single_narrator',
-  custom: 'single_narrator',
+  documentary:       'single_narrator',
+  explainer:         'single_narrator',
+  narrative:         'multi_character',
+  podcast_solo:      'single_narrator',
+  podcast_interview: 'host_guest',
+  podcast_narrative: 'single_narrator',
+  short_form:        'single_narrator',
+  screenplay:        'multi_character',
+  news:              'single_narrator',
+  commercial:        'single_narrator',
+  tutorial:          'single_narrator',
+  audio_drama:       'multi_character',
+  stage_play:        'multi_character',
+  custom:            'single_narrator',
 });
 
 function resolveVoiceMode(brief, resolvedFormat) {

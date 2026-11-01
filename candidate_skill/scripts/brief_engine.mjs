@@ -407,6 +407,56 @@ function validateCrossFields(normalized) {
     });
   }
 
+  // Voice/format contradiction checks
+  const MULTI_CHARACTER_INCOMPATIBLE = new Set(['commercial', 'news']);
+  if (voice.mode === 'multi_character' && MULTI_CHARACTER_INCOMPATIBLE.has(format)) {
+    holds.push({
+      type: QA_HOLD_TYPES.FORMAT_MISMATCH,
+      severity: 'BLOCKING',
+      detail: `Voice mode "multi_character" is incompatible with format "${format}" — ${format} typically uses single narrator or host/guest`,
+    });
+  }
+
+  // Duration vs format maximum
+  const formatDuration = FORMAT_DURATION_MAP[format];
+  if (formatDuration && normalized.word_resolution && normalized.word_resolution.runtime_estimate) {
+    const estSec = normalized.word_resolution.runtime_estimate.estimated_seconds;
+    if (format === 'short_form' && estSec > 180) {
+      holds.push({
+        type: QA_HOLD_TYPES.PLATFORM_COMPLIANCE,
+        severity: HOLD_SEVERITY[QA_HOLD_TYPES.PLATFORM_COMPLIANCE] || 'BLOCKING',
+        detail: `Short-form maximum 180 seconds — estimated duration is ${estSec} seconds`,
+      });
+    }
+    if (format === 'commercial' && estSec > 120) {
+      holds.push({
+        type: QA_HOLD_TYPES.PLATFORM_COMPLIANCE,
+        severity: HOLD_SEVERITY[QA_HOLD_TYPES.PLATFORM_COMPLIANCE] || 'BLOCKING',
+        detail: `Commercial maximum 120 seconds — estimated duration is ${estSec} seconds`,
+      });
+    }
+  }
+
+  // Content type contradiction with format default
+  const FORMAT_CONTENT_CONTRADICTIONS = Object.freeze({
+    news: new Set(['creative']),
+    documentary: new Set(['creative']),
+    tutorial: new Set(['creative']),
+  });
+  const contradictions = FORMAT_CONTENT_CONTRADICTIONS[format];
+  if (contradictions && contentType && contradictions.has(contentType)) {
+    warnings.push(`Content type "${contentType}" contradicts format "${format}" default — verify this is intentional`);
+  }
+
+  // Invalid format ID check
+  if (format && !SUPPORTED_FORMATS_SET.has(format)) {
+    holds.push({
+      type: QA_HOLD_TYPES.FORMAT_MISMATCH,
+      severity: 'BLOCKING',
+      detail: `Unknown format "${format}" — valid formats: ${SUPPORTED_FORMATS.join(', ')}`,
+    });
+  }
+
   // Niche sensitivity check
   if (normalized.niche_resolution && normalized.niche_resolution.high_stakes) {
     if (!normalized.niche_resolution.adapter) {
@@ -460,17 +510,31 @@ function assessBriefReadiness(normalized) {
     researchRequirements.push({
       type: 'som_verification',
       description: 'Subject/Object/Mechanism identification is provisional — requires verification through authorized research before factual claims',
-      status: 'PENDING',
+      status: 'REVIEW',
     });
   }
 
-  const generationReady = blockingHolds.length === 0 && researchRequirements.filter(r => r.status === 'BLOCKED').length === 0;
+  const briefAccepted = blockingHolds.length === 0;
+
+  const blockedResearch = researchRequirements.filter(r => r.status === 'BLOCKED');
+  const pendingResearch = researchRequirements.filter(r => r.status === 'PENDING');
+  const allResearchClear = blockedResearch.length === 0 && pendingResearch.length === 0;
+  const researchReady = allResearchClear || researchRequirements.length === 0;
+
+  const generationAuthorized = briefAccepted && researchReady;
+  const productionReleaseReady = false;
 
   return {
-    generation_ready: generationReady,
+    generation_ready: generationAuthorized,
+    brief_accepted: briefAccepted,
+    research_ready: researchReady,
+    generation_authorized: generationAuthorized,
+    production_release_ready: productionReleaseReady,
     blocking_holds: blockingHolds,
     advisory_holds: advisoryHolds,
     research_requirements: researchRequirements,
+    pending_research_count: pendingResearch.length,
+    blocked_research_count: blockedResearch.length,
     writing_strategy_handoff: {
       format: normalized.format ? normalized.format.value : null,
       content_type: contentType,

@@ -839,6 +839,83 @@ Every resolved field includes source: `explicit` | `alias` | `format_default` | 
 
 ---
 
+## M8 — Final Integration & Validation (v2.0.0)
+
+### End-to-End Pipeline (`pipeline.mjs`)
+
+The M8 pipeline connects all M1–M7 modules into one authoritative workflow:
+
+**Brief → Niche → Format → Voice/Duration → Research → Safety Gate → Blueprint → QA → Editorial → Report**
+
+- **Compatibility Adapter:** `normalizedToFlat()` converts M7 normalized field objects (with provenance tracking) to flat scalar briefs that M1–M6 modules expect.
+- **Pipeline Runner:** `runPipeline(brief, options)` executes all 10 stages, collects blockers and warnings, and returns a structured result with RESEARCH_ONLY_TERMINAL status.
+- **Quality Gates:** 7 separate verdicts — structural_complete, tests_pass, workflow_demonstrated, editorial_reviewed, research_verified, rights_cleared, production_approved.
+- **Pilot Scorecard:** `buildPilotScorecard()` aggregates pipeline results across pilot scripts.
+
+### Safety Closure (Defects A–H)
+
+| Defect | Module | Fix |
+|--------|--------|-----|
+| A | brief_engine | PENDING research now blocks `generation_ready`; separate `brief_accepted`, `research_ready`, `generation_authorized`, `production_release_ready` gates |
+| B | qa_engine | `stageF_holdEvaluation` adds SAFETY_AUDIT advisory when inputHolds not provided |
+| C | qa_engine | PLATFORM_COMPLIANCE → BLOCKING; new PLATFORM_ADVISORY for soft limits |
+| D | validate | `word_budget_status` now uses canonical spoken-word counter |
+| E | brief_engine | Cross-field validation for contradictory voice/format/content_type combinations |
+| F | content_type_engine | `VERIFIED_REQUIRES_TRUSTED_VERIFIER` constant; `validateResearchStateTransition` blocks SUBMITTED→VERIFIED |
+| G | content_type_engine | Creative content correctly exempted from evidence requirements |
+| H | All modules | All M1–M7 safeguards preserved; immutability maintained |
+
+### Complete Format Integration (14 formats)
+
+| Format | Status | Content Type | Voice Default | Evidence |
+|--------|--------|-------------|---------------|----------|
+| documentary | VALIDATED | factual | single_narrator | MANDATORY |
+| explainer | DESIGN_TARGET | factual | single_narrator | MANDATORY |
+| narrative | DESIGN_TARGET | creative | multi_character | CONTEXTUAL |
+| podcast_solo | DESIGN_TARGET | hybrid | single_narrator | PREFERRED |
+| podcast_interview | DESIGN_TARGET | hybrid | host_guest | PREFERRED |
+| podcast_narrative | DESIGN_TARGET | hybrid | single_narrator | PREFERRED |
+| short_form | DESIGN_TARGET | (inferred) | single_narrator | OPTIONAL |
+| screenplay | DESIGN_TARGET | creative | multi_character | CONTEXTUAL |
+| news | DESIGN_TARGET | factual | single_narrator | MANDATORY |
+| commercial | DESIGN_TARGET | hybrid | single_narrator | OPTIONAL |
+| tutorial | DESIGN_TARGET | instructional | single_narrator | MANDATORY |
+| audio_drama | DESIGN_TARGET | creative | multi_character | CONTEXTUAL |
+| stage_play | DESIGN_TARGET | creative | multi_character | CONTEXTUAL |
+| custom | DESIGN_TARGET | (explicit) | single_narrator | OPTIONAL |
+
+Only `documentary` is VALIDATED. All others remain DESIGN_TARGET pending format-specific QA validation.
+
+### Pilot Results (12 pilots)
+
+12 end-to-end pilot scripts executed covering: German documentary (N03), English science explainer (N05), psychology short-form (Tier 2), fictional multi-character narrative, host-guest podcast interview, tutorial, USA weather N01, military aviation N02, commercial, solo podcast, audio drama, and custom format. All pilots complete without crash; verdicts are RESEARCH_ONLY_TERMINAL or HOLD (expected for factual content without verified evidence).
+
+### Test Summary
+
+| Suite | Count | Status |
+|-------|-------|--------|
+| M1 Niche | 68 | PASS |
+| M2 Format Router | 150 | PASS |
+| M2 Completion | 75 | PASS |
+| M3 Evidence | 144 | PASS |
+| M3.1 Regression | 218 | PASS |
+| M3.2 Regression | 35 | PASS |
+| M3.3 Regression | 26 | PASS |
+| M4 Duration | 57 | PASS |
+| M5 Voice | 49 | PASS |
+| M6 QA | 68 | PASS |
+| M7 Brief | 133 | PASS |
+| M8 Integration | 104 | PASS |
+| Prototype | 37 | PASS |
+| Skill Integration | 85 | PASS |
+| **TOTAL** | **1249** | **0 failures** |
+
+### Exports
+
+`runPipeline`, `normalizedToFlat`, `evaluateQualityGates`, `buildPilotScorecard`, `PIPELINE_VERSION`, `PIPELINE_STAGES`, `PIPELINE_STATUS`, `collectInputHolds`
+
+---
+
 ## Restrictions
 
 - This skill is a RESEARCH_ONLY candidate. It has not been approved for production use.

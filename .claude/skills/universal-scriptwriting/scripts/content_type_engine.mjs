@@ -17,10 +17,20 @@ const CONTENT_TYPES = Object.freeze({
 const CONTENT_TYPE_SET = new Set(Object.values(CONTENT_TYPES));
 
 const FORMAT_CONTENT_TYPE_DEFAULTS = Object.freeze({
-  documentary: CONTENT_TYPES.FACTUAL,
-  explainer: CONTENT_TYPES.FACTUAL,
-  short_form: null,
-  custom: null,
+  documentary:       CONTENT_TYPES.FACTUAL,
+  explainer:         CONTENT_TYPES.FACTUAL,
+  news:              CONTENT_TYPES.FACTUAL,
+  tutorial:          CONTENT_TYPES.INSTRUCTIONAL,
+  narrative:         CONTENT_TYPES.CREATIVE,
+  screenplay:        CONTENT_TYPES.CREATIVE,
+  audio_drama:       CONTENT_TYPES.CREATIVE,
+  stage_play:        CONTENT_TYPES.CREATIVE,
+  commercial:        CONTENT_TYPES.HYBRID,
+  podcast_solo:      CONTENT_TYPES.HYBRID,
+  podcast_interview: CONTENT_TYPES.HYBRID,
+  podcast_narrative: CONTENT_TYPES.HYBRID,
+  short_form:        null,
+  custom:            null,
 });
 
 function inferContentType(brief, resolvedFormat) {
@@ -167,6 +177,42 @@ const RESEARCH_STATES = Object.freeze({
   FAILED: 'failed',
 });
 
+// M8 Defect F: VERIFIED requires a trusted verification mechanism.
+// No code path in this system can produce VERIFIED. Client-provided evidence,
+// boolean flags, and offline fixtures CANNOT self-certify as verified.
+const VERIFIED_REQUIRES_TRUSTED_VERIFIER = Object.freeze({
+  requirement: 'Claim-level source assessment, provenance check, or independent corroboration by an authorized research provider',
+  implemented: false,
+  note: 'Until a trusted verifier exists, SUBMITTED cannot transition to VERIFIED',
+});
+
+const VALID_RESEARCH_STATE_TRANSITIONS = Object.freeze({
+  [RESEARCH_STATES.NOT_STARTED]:        Object.freeze([RESEARCH_STATES.SUBMITTED, RESEARCH_STATES.RESEARCH_PENDING, RESEARCH_STATES.UNRESOURCED]),
+  [RESEARCH_STATES.SUBMITTED]:          Object.freeze([RESEARCH_STATES.PARTIALLY_VERIFIED, RESEARCH_STATES.FAILED]),
+  [RESEARCH_STATES.RESEARCH_PENDING]:   Object.freeze([RESEARCH_STATES.PARTIALLY_VERIFIED, RESEARCH_STATES.FAILED, RESEARCH_STATES.UNRESOURCED]),
+  [RESEARCH_STATES.PARTIALLY_VERIFIED]: Object.freeze([RESEARCH_STATES.VERIFIED, RESEARCH_STATES.FAILED]),
+  [RESEARCH_STATES.VERIFIED]:           Object.freeze([]),
+  [RESEARCH_STATES.UNRESOURCED]:        Object.freeze([RESEARCH_STATES.RESEARCH_PENDING]),
+  [RESEARCH_STATES.FAILED]:             Object.freeze([RESEARCH_STATES.NOT_STARTED]),
+});
+
+function validateResearchStateTransition(fromState, toState) {
+  if (fromState === RESEARCH_STATES.SUBMITTED && toState === RESEARCH_STATES.VERIFIED) {
+    return {
+      valid: false,
+      error: 'SUBMITTED cannot transition directly to VERIFIED — requires trusted verification mechanism (not yet implemented)',
+    };
+  }
+  const allowed = VALID_RESEARCH_STATE_TRANSITIONS[fromState];
+  if (!allowed) {
+    return { valid: false, error: `Unknown research state: "${fromState}"` };
+  }
+  if (!allowed.includes(toState)) {
+    return { valid: false, error: `Invalid transition: ${fromState} → ${toState} — allowed: ${allowed.join(', ') || 'none'}` };
+  }
+  return { valid: true };
+}
+
 // Generation gate: four separate permissions
 // M3.3: Only VERIFIED evidence is research-ready. SUBMITTED means evidence is present
 // but verification is incomplete — it supports planning but not factual generation.
@@ -213,11 +259,12 @@ function assessGenerationReadiness(m3Resolution, researchState, providerAvailabl
   return Object.freeze({ ...gates, blockers: Object.freeze(blockers) });
 }
 
-// M3.3 FIX 2: No code path here returns VERIFIED. VERIFIED requires a trusted
-// verification mechanism (claim-level source assessment, provenance check, independent
-// corroboration) that is NOT YET IMPLEMENTED. Client-provided fields, boolean flags,
-// and offline fixtures cannot self-certify. Until a trusted verifier exists, factual
-// generation remains blocked for all evidence-required content.
+// M3.3 FIX 2 + M8 Defect F: No code path here returns VERIFIED. VERIFIED requires a
+// trusted verification mechanism (claim-level source assessment, provenance check,
+// independent corroboration) that is NOT YET IMPLEMENTED. Client-provided fields,
+// boolean flags, and offline fixtures cannot self-certify. Until a trusted verifier
+// exists, factual generation remains blocked for all evidence-required content.
+// INVARIANT: This function NEVER returns RESEARCH_STATES.VERIFIED.
 function deriveResearchState(brief, researchMode, providerAvailable) {
   const hasEvidence = Array.isArray(brief.evidence) && brief.evidence.length > 0;
 
@@ -473,11 +520,14 @@ export {
   SOURCE_TYPES,
   RESEARCH_STATES,
   CLAIM_TYPES,
+  VERIFIED_REQUIRES_TRUSTED_VERIFIER,
+  VALID_RESEARCH_STATE_TRANSITIONS,
   inferContentType,
   getEvidencePolicy,
   inferResearchMode,
   createEvidenceRecord,
   validateEvidenceRecord,
+  validateResearchStateTransition,
   ResearchProvider,
   createOfflineFixtureProvider,
   resolveM3,

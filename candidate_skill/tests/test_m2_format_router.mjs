@@ -127,12 +127,12 @@ assert("M2-054", Object.isFrozen(DOCUMENTARY_FORMAT.arc.sections), "Documentary 
 assert("M2-055", isRegisteredFormat("documentary"), "documentary is registered");
 assert("M2-056", isRegisteredFormat("explainer"), "explainer is registered");
 assert("M2-057", isRegisteredFormat("short_form"), "short_form is registered");
-assert("M2-058", !isRegisteredFormat("podcast_solo"), "podcast_solo is NOT registered");
-assert("M2-059", !isRegisteredFormat("screenplay"), "screenplay is NOT registered");
+assert("M2-058", isRegisteredFormat("podcast_solo"), "podcast_solo IS registered (M8)");
+assert("M2-059", isRegisteredFormat("screenplay"), "screenplay IS registered (M8)");
 assert("M2-060", !isRegisteredFormat(""), "empty string is NOT registered");
 
 const allIds = getFormatIds();
-assert("M2-061", allIds.length === 3, "3 formats registered");
+assert("M2-061", allIds.length >= 13, "At least 13 formats registered (M8 expanded from 3)");
 assert("M2-062", allIds.includes("documentary"), "documentary in format list");
 assert("M2-063", allIds.includes("explainer"), "explainer in format list");
 assert("M2-064", allIds.includes("short_form"), "short_form in format list");
@@ -142,7 +142,7 @@ assert("M2-065", validated.length === 1, "1 validated format");
 assert("M2-066", validated[0] === "documentary", "Only documentary is validated");
 
 const designTargets = getDesignTargetFormats();
-assert("M2-067", designTargets.length === 2, "2 design target formats");
+assert("M2-067", designTargets.length >= 12, "At least 12 design target formats (M8 expanded from 2)");
 assert("M2-068", designTargets.includes("explainer"), "explainer is design target");
 assert("M2-069", designTargets.includes("short_form"), "short_form is design target");
 
@@ -184,7 +184,7 @@ assert("M2-086", sfResult.resolved.id === "short_form", "Short form resolves");
 assert("M2-087", sfResult.warning !== undefined, "Short form has DESIGN_TARGET warning");
 
 // Unsupported format — HOLD
-const unsupported = resolveFormat({ format: "podcast_solo" });
+const unsupported = resolveFormat({ format: "nonexistent_format_xyz" });
 assert("M2-088", unsupported.resolved === null, "Unsupported format does not resolve");
 assert("M2-089", unsupported.hold !== undefined, "Unsupported format triggers hold");
 assert("M2-090", unsupported.hold.type === "HOLD_FORMAT_MISMATCH", "Hold type is HOLD_FORMAT_MISMATCH");
@@ -225,7 +225,7 @@ assert("M2-101", explValidation.warnings.some(w => w.includes("DESIGN TARGET")),
 // Unsupported format triggers HOLD in validation
 const badFmtValidation = validateInput({
   title: "Test", niche: "N01", subject: "s", object: "o", mechanism: "m", uncertainty: "preliminary",
-  format: "podcast_solo",
+  format: "nonexistent_format_xyz",
   niche_context: { issued_at: "2026-01-01", valid_until: "2026-12-31", reference_time: "2026-06-01" },
   evidence: [{ id: "E-001", source: "test", epistemic_status: "preliminary", can_use_for_synthetic: true }]
 });
@@ -328,7 +328,7 @@ assert("M2-145", "format_resolution" in fullResult.stages, "format_resolution st
 const dangerInput = {
   title: "Confirmed Result", niche: "N01", subject: "s", object: "o", mechanism: "m",
   uncertainty: "preliminary",
-  format: "podcast_solo",
+  format: "nonexistent_format_xyz",
   request_release: true,
   niche_context: { issued_at: "2026-01-01", valid_until: "2026-12-31", reference_time: "2026-06-01" },
   evidence: []

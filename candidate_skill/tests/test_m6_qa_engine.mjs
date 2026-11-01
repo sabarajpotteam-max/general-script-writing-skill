@@ -94,8 +94,8 @@ function makeBasicBrief(overrides = {}) {
 // ═══════════════════════════════════════════════════════════════
 
 describe('M6: QA_HOLD_TYPES constants', () => {
-  it('has exactly 20 hold types', () => {
-    assert.equal(Object.keys(QA_HOLD_TYPES).length, 20);
+  it('has exactly 21 hold types', () => {
+    assert.equal(Object.keys(QA_HOLD_TYPES).length, 21);
   });
 
   it('includes 12 original hold types', () => {
@@ -109,11 +109,11 @@ describe('M6: QA_HOLD_TYPES constants', () => {
     }
   });
 
-  it('includes 8 new hold types', () => {
+  it('includes 9 new hold types', () => {
     const newTypes = [
       'FORMAT_MISMATCH', 'AUDIENCE_RISK', 'PLATFORM_COMPLIANCE',
-      'DOMAIN_UNKNOWN', 'CULTURAL_SENSITIVITY', 'LEGAL_CLAIM',
-      'MEDICAL_CLAIM', 'FINANCIAL_CLAIM',
+      'PLATFORM_ADVISORY', 'DOMAIN_UNKNOWN', 'CULTURAL_SENSITIVITY',
+      'LEGAL_CLAIM', 'MEDICAL_CLAIM', 'FINANCIAL_CLAIM',
     ];
     for (const k of newTypes) {
       assert.ok(QA_HOLD_TYPES[k], `Missing new: ${k}`);
@@ -127,9 +127,10 @@ describe('M6: QA_HOLD_TYPES constants', () => {
     }
   });
 
-  it('FORMAT_MISMATCH and PLATFORM_COMPLIANCE are ADVISORY', () => {
+  it('FORMAT_MISMATCH is ADVISORY, PLATFORM_COMPLIANCE is BLOCKING, PLATFORM_ADVISORY is ADVISORY', () => {
     assert.equal(HOLD_SEVERITY[QA_HOLD_TYPES.FORMAT_MISMATCH], 'ADVISORY');
-    assert.equal(HOLD_SEVERITY[QA_HOLD_TYPES.PLATFORM_COMPLIANCE], 'ADVISORY');
+    assert.equal(HOLD_SEVERITY[QA_HOLD_TYPES.PLATFORM_COMPLIANCE], 'BLOCKING');
+    assert.equal(HOLD_SEVERITY[QA_HOLD_TYPES.PLATFORM_ADVISORY], 'ADVISORY');
   });
 
   it('QA_RESULT has four states', () => {

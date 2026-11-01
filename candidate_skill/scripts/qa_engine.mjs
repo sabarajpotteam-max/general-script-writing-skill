@@ -27,6 +27,7 @@ const QA_HOLD_TYPES = Object.freeze({
   FORMAT_MISMATCH: 'HOLD_FORMAT_MISMATCH',
   AUDIENCE_RISK: 'HOLD_AUDIENCE_RISK',
   PLATFORM_COMPLIANCE: 'HOLD_PLATFORM_COMPLIANCE',
+  PLATFORM_ADVISORY: 'HOLD_PLATFORM_ADVISORY',
   DOMAIN_UNKNOWN: 'HOLD_DOMAIN_UNKNOWN',
   CULTURAL_SENSITIVITY: 'HOLD_CULTURAL_SENSITIVITY',
   LEGAL_CLAIM: 'HOLD_LEGAL_CLAIM',
@@ -49,7 +50,8 @@ const HOLD_SEVERITY = Object.freeze({
   [QA_HOLD_TYPES.NEEDS_RECHECK]: 'BLOCKING',
   [QA_HOLD_TYPES.FORMAT_MISMATCH]: 'ADVISORY',
   [QA_HOLD_TYPES.AUDIENCE_RISK]: 'BLOCKING',
-  [QA_HOLD_TYPES.PLATFORM_COMPLIANCE]: 'ADVISORY',
+  [QA_HOLD_TYPES.PLATFORM_COMPLIANCE]: 'BLOCKING',
+  [QA_HOLD_TYPES.PLATFORM_ADVISORY]: 'ADVISORY',
   [QA_HOLD_TYPES.DOMAIN_UNKNOWN]: 'BLOCKING',
   [QA_HOLD_TYPES.CULTURAL_SENSITIVITY]: 'BLOCKING',
   [QA_HOLD_TYPES.LEGAL_CLAIM]: 'BLOCKING',
@@ -628,18 +630,25 @@ const FINANCIAL_PATTERNS = /\b(?:investment advice|guaranteed returns|financial 
 
 function stageF_holdEvaluation(allFindings, inputHolds, scriptText, contentType) {
   const holds = [];
+  const safeInputHolds = Array.isArray(inputHolds) ? inputHolds : [];
 
-  // Collect holds from input validation
-  if (Array.isArray(inputHolds)) {
-    for (const h of inputHolds) {
-      const holdType = h.type || 'HOLD_REVIEW';
-      holds.push({
-        type: holdType,
-        severity: HOLD_SEVERITY[holdType] || 'BLOCKING',
-        detail: h.detail || h.message || 'Input validation hold',
-        source_stage: 'input',
-      });
-    }
+  if (!Array.isArray(inputHolds)) {
+    holds.push({
+      type: 'SAFETY_AUDIT',
+      severity: 'ADVISORY',
+      detail: 'inputHolds was not provided to stageF — input validation holds were not evaluated. Call runQA() or pass inputHolds explicitly.',
+      source_stage: 'F',
+    });
+  }
+
+  for (const h of safeInputHolds) {
+    const holdType = h.type || 'HOLD_REVIEW';
+    holds.push({
+      type: holdType,
+      severity: HOLD_SEVERITY[holdType] || 'BLOCKING',
+      detail: h.detail || h.message || 'Input validation hold',
+      source_stage: 'input',
+    });
   }
 
   // Collect hold-level findings from stages A-E

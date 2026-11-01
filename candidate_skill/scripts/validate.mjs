@@ -43,7 +43,7 @@ const HOLD_TYPES = {
 
 export { resolveNiche, isRegisteredNiche, registerNiche, isBuiltinNiche } from "./niche_resolver.mjs";
 export { resolveFormat, getFormatDefinition, isRegisteredFormat, FORMAT_STATUS } from "./format_registry.mjs";
-export { CONTENT_TYPES, RESEARCH_MODES, RESEARCH_STATES, inferContentType, inferResearchMode, getEvidencePolicy, resolveM3, assessGenerationReadiness, deriveResearchState } from "./content_type_engine.mjs";
+export { CONTENT_TYPES, RESEARCH_MODES, RESEARCH_STATES, inferContentType, inferResearchMode, getEvidencePolicy, resolveM3, assessGenerationReadiness, deriveResearchState, VERIFIED_REQUIRES_TRUSTED_VERIFIER, VALID_RESEARCH_STATE_TRANSITIONS, validateResearchStateTransition } from "./content_type_engine.mjs";
 export { SPEAKING_RATES, SPEAKING_RATE_SET, getSpeakingRate, parseDuration, resolveTargetWords, estimateRuntime } from "./duration_engine.mjs";
 export { VOICE_MODES, VOICE_MODE_SET, resolveVoiceMode, validateSpeakerLabels, checkBrandVoiceCompliance, countSpokenWordsMultiVoice } from "./voice_engine.mjs";
 export { QA_HOLD_TYPES, HOLD_SEVERITY, QA_RESULT, countCanonicalSpokenWords, runQA } from "./qa_engine.mjs";
@@ -516,11 +516,13 @@ export function analyzeScript(scriptText, input, options = {}) {
     canonical_spoken_words: canonicalSpokenWords,
     narration_runtime: narrationRuntime,
     target_words: resolvedTarget,
+    legacy_word_count: spokenNarrationWords,
     word_budget_status: (() => {
       const tgt = resolvedTarget;
       const fmt = options.format || getFormatDefinition(input.format || 'documentary');
       const tolerance = fmt ? fmt.spoken_word_budget_tolerance : 0.05;
-      return spokenNarrationWords >= Math.floor(tgt * (1 - tolerance)) && spokenNarrationWords <= Math.ceil(tgt * (1 + tolerance)) ? "PASS" : "REVIEW";
+      const canonical = canonicalSpokenWords.total_spoken_words;
+      return canonical >= Math.floor(tgt * (1 - tolerance)) && canonical <= Math.ceil(tgt * (1 + tolerance)) ? "PASS" : "REVIEW";
     })(),
     evidence_referenced: referencedIds,
     evidence_unreferenced: unreferencedIds,
