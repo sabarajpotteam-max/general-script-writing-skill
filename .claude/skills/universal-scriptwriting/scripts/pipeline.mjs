@@ -332,6 +332,8 @@ function buildPipelineResult(stages, blockers, warnings, lastStage, startTime, e
     overallVerdict = 'HOLD';
   } else if (qaVerdict === 'PASS_WITH_WARNINGS') {
     overallVerdict = 'RESEARCH_ONLY_TERMINAL';
+  } else if (qaVerdict === 'PASS' || qaVerdict === null) {
+    overallVerdict = 'RESEARCH_ONLY_TERMINAL';
   } else {
     overallVerdict = 'RESEARCH_ONLY_TERMINAL';
   }
@@ -391,16 +393,15 @@ function evaluateQualityGates(pipelineResult) {
     reasons.workflow_demonstrated = 'QA stage not completed — no script text evaluated';
   }
 
-  // Gate 4: Editorial reviewed
+  // Gate 4: Editorial reviewed — ALWAYS false from automation.
+  // Automated editorial suggestions are NOT human editorial review.
+  // This gate requires actual human sign-off which cannot be simulated.
+  gates.editorial_reviewed = false;
+  const suggestions = pipelineResult.stages.editorial?.revision_suggestions || [];
   if (pipelineResult.stages.editorial?.status === PIPELINE_STATUS.COMPLETED) {
-    const suggestions = pipelineResult.stages.editorial.revision_suggestions || [];
-    gates.editorial_reviewed = suggestions.length === 0 ||
-      suggestions.every(s => s.priority > 3);
-    if (!gates.editorial_reviewed) {
-      reasons.editorial_reviewed = `${suggestions.filter(s => s.priority <= 3).length} high-priority editorial suggestions unresolved`;
-    }
+    reasons.editorial_reviewed = `Automated editorial pass completed (${suggestions.length} suggestions) — human editorial review still required`;
   } else {
-    reasons.editorial_reviewed = 'Editorial stage not completed';
+    reasons.editorial_reviewed = 'Editorial stage not completed — human editorial review required';
   }
 
   // Gate 5: Research verified
@@ -432,7 +433,7 @@ function evaluateQualityGates(pipelineResult) {
     pass_count: passCount,
     total_gates: totalGates,
     overall: passCount === totalGates ? 'ALL_PASS' : `${passCount}/${totalGates}_PASS`,
-    recommendation: passCount >= 5 ? 'CONDITIONAL' : passCount >= 3 ? 'CONDITIONAL' : 'REWORK',
+    recommendation: passCount >= 3 ? 'CONDITIONAL' : 'REWORK',
   };
 }
 
@@ -457,12 +458,19 @@ function buildPilotScorecard(pilotResults) {
 
   for (const pilot of pilotResults) {
     const verdict = pilot.verdict || 'FAILED';
-    if (verdict === 'RESEARCH_ONLY_TERMINAL' || verdict === 'PASS' || verdict === 'PASS_WITH_WARNINGS') {
-      scorecard.passed++;
-    } else if (verdict === 'HOLD') {
+    const qaVerdict = pilot.qa_verdict || null;
+    const hasBlockingHolds = (pilot.blockers || []).some(b =>
+      b.hold?.severity === 'BLOCKING' || (typeof b.severity === 'string' && b.severity === 'BLOCKING')
+    );
+
+    if (verdict === 'HOLD' || qaVerdict === 'HOLD' || hasBlockingHolds) {
       scorecard.held++;
     } else if (verdict === 'BLOCKED') {
       scorecard.blocked++;
+    } else if (verdict === 'FAILED') {
+      scorecard.failed++;
+    } else if (verdict === 'RESEARCH_ONLY_TERMINAL' || verdict === 'PASS' || verdict === 'PASS_WITH_WARNINGS') {
+      scorecard.passed++;
     } else {
       scorecard.failed++;
     }

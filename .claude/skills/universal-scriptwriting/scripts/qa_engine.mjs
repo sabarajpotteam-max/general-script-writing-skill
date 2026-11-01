@@ -634,9 +634,9 @@ function stageF_holdEvaluation(allFindings, inputHolds, scriptText, contentType)
 
   if (!Array.isArray(inputHolds)) {
     holds.push({
-      type: 'SAFETY_AUDIT',
-      severity: 'ADVISORY',
-      detail: 'inputHolds was not provided to stageF — input validation holds were not evaluated. Call runQA() or pass inputHolds explicitly.',
+      type: 'HOLD_SAFETY_AUDIT_MISSING',
+      severity: 'BLOCKING',
+      detail: 'inputHolds was not provided to stageF — pipeline safety context missing. Generation blocked until upstream validation holds are evaluated.',
       source_stage: 'F',
     });
   }
@@ -887,7 +887,9 @@ function runQA(scriptText, brief, options = {}) {
     ...(E.findings || []),
   ];
 
-  const inputHolds = options.inputHolds || [];
+  const inputHolds = Object.prototype.hasOwnProperty.call(options, 'inputHolds')
+    ? options.inputHolds
+    : undefined;
   const F = stageF_holdEvaluation(allFindings, inputHolds, scriptText, contentType);
 
   const stageResults = { A, B, C, D, E };

@@ -238,12 +238,16 @@ describe('M8-CAT04: Safety Defect B — QA Input Holds', () => {
     assert.ok(result.stages.F);
   });
 
-  it('SB-002: runQA works without inputHolds', () => {
+  it('SB-002: runQA without inputHolds triggers BLOCKING safety audit hold', () => {
     const result = runQA(
       'NARRATOR: Test script content.',
       { format: 'documentary', content_type: 'factual' }
     );
     assert.ok(result.report);
+    assert.strictEqual(result.report.verdict, 'HOLD', 'Missing inputHolds must produce HOLD verdict');
+    const safetyHold = result.stages.F.holds.find(h => h.type === 'HOLD_SAFETY_AUDIT_MISSING');
+    assert.ok(safetyHold, 'Must have HOLD_SAFETY_AUDIT_MISSING hold');
+    assert.strictEqual(safetyHold.severity, 'BLOCKING');
   });
 
   it('SB-003: Input holds appear in QA report', () => {
