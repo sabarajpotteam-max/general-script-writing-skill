@@ -33,6 +33,7 @@ const QA_HOLD_TYPES = Object.freeze({
   LEGAL_CLAIM: 'HOLD_LEGAL_CLAIM',
   MEDICAL_CLAIM: 'HOLD_MEDICAL_CLAIM',
   FINANCIAL_CLAIM: 'HOLD_FINANCIAL_CLAIM',
+  UPSTREAM_UNVERIFIED: 'HOLD_UPSTREAM_UNVERIFIED',
 });
 
 const HOLD_SEVERITY = Object.freeze({
@@ -57,6 +58,7 @@ const HOLD_SEVERITY = Object.freeze({
   [QA_HOLD_TYPES.LEGAL_CLAIM]: 'BLOCKING',
   [QA_HOLD_TYPES.MEDICAL_CLAIM]: 'BLOCKING',
   [QA_HOLD_TYPES.FINANCIAL_CLAIM]: 'BLOCKING',
+  [QA_HOLD_TYPES.UPSTREAM_UNVERIFIED]: 'ADVISORY',
 });
 
 const QA_RESULT = Object.freeze({
@@ -147,7 +149,7 @@ function countCanonicalSpokenWords(text, voiceResolution) {
 // SECTION PARSER
 // ═══════════════════════════════════════════════════════════════
 
-const SCRIPT_HEADING_RE = /^#{2,3}\s+(?:HOOK|PROBLEM|DISCOVERY|MECHANISM|CHALLENGE|RESOLUTION|IMPLICATIONS|OUTRO|DAS PROBLEM|DIE ENTDECKUNG|DER MECHANISMUS|DIE HERAUSFORDERUNG|DIE AUFL[OÖ]SUNG|IMPLIKATIONEN|FOLGERUNGEN|FOUNDATION|BUILD|EXAMPLE|NUANCE|SYNTHESIS|NEXT\s+STEPS|BODY|CTA|SECTION\s+\d+|Evidence Register|Evidenz\s*register|QA[- ]?Report|QA[- ]?Bericht|PART\s+\d+)[\s:]*(.*)$/i;
+const SCRIPT_HEADING_RE = /^#{2,3}\s+(.+)$/;
 const NON_NARRATION_RE = /evidence\s*register|evidenz\s*register|qa[\s-]?report|qa[\s-]?bericht|part\s+\d+.*(?:evidenz|qa|bericht)/i;
 
 function parseScriptSections(scriptText) {
@@ -186,8 +188,60 @@ function parseScriptSections(scriptText) {
 // STAGE A: STRUCTURAL QA
 // ═══════════════════════════════════════════════════════════════
 
+const SECTION_ALIASES = Object.freeze({
+  hook:         ['hook', 'einstieg', 'aufhänger'],
+  problem:      ['problem', 'das problem'],
+  discovery:    ['discovery', 'die entdeckung', 'entdeckung'],
+  mechanism:    ['mechanism', 'der mechanismus', 'mechanismus'],
+  challenge:    ['challenge', 'die herausforderung', 'herausforderung'],
+  resolution:   ['resolution', 'die auflösung', 'auflösung', 'die auflosung', 'auflosung'],
+  implications: ['implications', 'implikationen', 'folgerungen'],
+  outro:        ['outro', 'abschluss', 'schluss'],
+  intro:        ['intro', 'einleitung', 'einführung'],
+  guest_intro:  ['guest intro', 'gast vorstellung', 'gastvorstellung'],
+  discussion:   ['discussion', 'diskussion', 'gespräch'],
+  deep_dive:    ['deep dive', 'vertiefung', 'tiefgang'],
+  rapid_fire:   ['rapid fire', 'schnellrunde', 'blitzrunde'],
+  closing:      ['closing', 'abschluss', 'verabschiedung'],
+  foundation:   ['foundation', 'grundlage'],
+  build:        ['build', 'aufbau'],
+  example:      ['example', 'beispiel'],
+  nuance:       ['nuance', 'feinheit'],
+  synthesis:    ['synthesis', 'synthese', 'zusammenfassung'],
+  next_steps:   ['next steps', 'nächste schritte', 'ausblick'],
+  body:         ['body', 'hauptteil'],
+  cta:          ['cta', 'call to action', 'handlungsaufforderung'],
+  topic_setup:  ['topic setup', 'thema einführung'],
+  main_discussion: ['main discussion', 'hauptdiskussion'],
+  takeaways:    ['takeaways', 'erkenntnisse'],
+  cold_open:    ['cold open', 'kalter einstieg'],
+  act_one:      ['act one', 'akt eins', 'erster akt'],
+  act_two:      ['act two', 'akt zwei', 'zweiter akt'],
+  act_three:    ['act three', 'akt drei', 'dritter akt'],
+});
+
 function normalizeLabel(label) {
-  return label.toLowerCase().replace(/[^a-z0-9]/g, '');
+  return label.toLowerCase().replace(/[^a-zäöüß0-9\s]/g, '').trim().replace(/\s+/g, ' ');
+}
+
+function sectionMatches(actualName, expectedArcSection) {
+  const norm = normalizeLabel(actualName);
+  const id = expectedArcSection.id;
+  const lbl = normalizeLabel(expectedArcSection.label || id);
+
+  if (norm === lbl) return true;
+  if (norm === id.replace(/_/g, ' ')) return true;
+
+  const aliases = SECTION_ALIASES[id];
+  if (aliases) {
+    for (const alias of aliases) {
+      if (norm === alias) return true;
+    }
+  }
+
+  if (norm.includes(lbl) || lbl.includes(norm)) return true;
+
+  return false;
 }
 
 function stageA_structural(scriptSections, resolvedFormat, targetWords, spokenWordResult) {
@@ -207,14 +261,12 @@ function stageA_structural(scriptSections, resolvedFormat, targetWords, spokenWo
     findings.push({ type: 'structural', severity: 'REVIEW', detail: `Expected ${expectedCount} sections, found ${actualCount}` });
   }
 
-  // Section order check (fuzzy)
+  // Section order check (language-aware)
   if (actualCount > 0 && expectedCount > 0) {
-    const expectedLabels = arcSections.map(s => normalizeLabel(s.label || s.id));
-    const actualLabels = scriptSections.map(s => normalizeLabel(s.name));
     let orderCorrect = true;
-    const minLen = Math.min(expectedLabels.length, actualLabels.length);
+    const minLen = Math.min(arcSections.length, scriptSections.length);
     for (let i = 0; i < minLen; i++) {
-      if (!actualLabels[i].includes(expectedLabels[i]) && !expectedLabels[i].includes(actualLabels[i])) {
+      if (!sectionMatches(scriptSections[i].name, arcSections[i])) {
         orderCorrect = false;
         findings.push({ type: 'structural', severity: 'REVIEW', detail: `Section ${i + 1}: expected "${arcSections[i].label}", found "${scriptSections[i].name}"` });
       }
@@ -639,6 +691,13 @@ function stageF_holdEvaluation(allFindings, inputHolds, scriptText, contentType)
       detail: 'inputHolds was not provided to stageF — pipeline safety context missing. Generation blocked until upstream validation holds are evaluated.',
       source_stage: 'F',
     });
+  } else if (inputHolds.length === 0) {
+    holds.push({
+      type: 'HOLD_UPSTREAM_UNVERIFIED',
+      severity: 'ADVISORY',
+      detail: 'inputHolds was supplied as empty array — this does not constitute proof that upstream validation was performed. Structural QA proceeds but factual claims remain unverified.',
+      source_stage: 'F',
+    });
   }
 
   for (const h of safeInputHolds) {
@@ -781,11 +840,19 @@ function stageH_qaReport(allStageResults, brief, options = {}) {
 
   const runId = `QA-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
 
+  const verdictScope = {
+    scope: 'structural_editorial',
+    covers: 'Section structure, word budgets, content patterns, format compliance, editorial suggestions',
+    does_not_cover: 'Factual accuracy of claims, live research verification, rights clearance, human editorial sign-off, production readiness',
+    note: 'A PASS verdict means the script meets structural and editorial heuristics only. It does not certify factual claims, authorize production, or replace human review.',
+  };
+
   if (compact) {
     return {
       run_id: runId,
       timestamp: new Date().toISOString(),
       verdict,
+      verdict_scope: verdictScope,
       blocking_holds: blockingHolds,
       critical_findings: collectCriticalFindings(allStageResults),
       stage_statuses: stageStatuses,
@@ -802,6 +869,7 @@ function stageH_qaReport(allStageResults, brief, options = {}) {
       content_type: brief.content_type || 'factual',
     },
     verdict,
+    verdict_scope: verdictScope,
     stage_statuses: stageStatuses,
     all_findings: collectAllFindings(allStageResults),
     hold_register: holdResult.holds,
@@ -910,8 +978,11 @@ export {
   QA_HOLD_TYPES,
   HOLD_SEVERITY,
   QA_RESULT,
+  SECTION_ALIASES,
   countCanonicalSpokenWords,
   parseScriptSections,
+  sectionMatches,
+  normalizeLabel,
   stageA_structural,
   stageB_content,
   stageC_evidence,

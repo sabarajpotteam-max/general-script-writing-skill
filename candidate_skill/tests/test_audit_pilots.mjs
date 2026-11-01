@@ -330,5 +330,43 @@ describe('AUDIT: Full-Length Pilot Pipeline Exercise', () => {
       assert.strictEqual(safetyMissing, undefined,
         'Pipeline must pass collected inputHolds to QA, preventing SAFETY_AUDIT_MISSING');
     });
+
+    it('XV-007: runQA with empty inputHolds triggers HOLD_UPSTREAM_UNVERIFIED advisory', () => {
+      const result = runQA(PILOT_A_SCRIPT, PILOT_A_BRIEF, { inputHolds: [] });
+      const upstreamHold = (result.stages.F.holds || []).find(
+        h => h.type === 'HOLD_UPSTREAM_UNVERIFIED'
+      );
+      assert.ok(upstreamHold, 'Empty inputHolds must trigger HOLD_UPSTREAM_UNVERIFIED');
+      assert.strictEqual(upstreamHold.severity, 'ADVISORY',
+        'HOLD_UPSTREAM_UNVERIFIED must be ADVISORY severity');
+    });
+
+    it('XV-008: QA report includes verdict_scope distinguishing structural from factual', () => {
+      const result = runQA(PILOT_A_SCRIPT, PILOT_A_BRIEF, { inputHolds: ['HOLD_NO_LIVE_RESEARCH'] });
+      const report = result.report;
+      assert.ok(report, 'QA must produce a report');
+      assert.ok(report.verdict_scope, 'Report must include verdict_scope');
+      assert.strictEqual(report.verdict_scope.scope, 'structural_editorial',
+        'verdict_scope.scope must be structural_editorial');
+      assert.ok(report.verdict_scope.does_not_cover,
+        'verdict_scope must state what it does not cover');
+    });
+
+    it('XV-009: all five pilots achieve StageA PASS with 0 findings', () => {
+      const pilots = [
+        { name: 'A', brief: PILOT_A_BRIEF, script: PILOT_A_SCRIPT },
+        { name: 'B', brief: PILOT_B_BRIEF, script: PILOT_B_SCRIPT },
+        { name: 'C', brief: PILOT_C_BRIEF, script: PILOT_C_SCRIPT },
+        { name: 'D', brief: PILOT_D_BRIEF, script: PILOT_D_SCRIPT },
+        { name: 'E', brief: PILOT_E_BRIEF, script: PILOT_E_SCRIPT },
+      ];
+      for (const p of pilots) {
+        const r = runQA(p.script, p.brief, { inputHolds: ['HOLD_NO_LIVE_RESEARCH'] });
+        assert.strictEqual(r.stages.A.status, 'PASS',
+          `Pilot ${p.name} StageA must be PASS`);
+        assert.strictEqual(r.stages.A.findings.length, 0,
+          `Pilot ${p.name} StageA must have 0 findings`);
+      }
+    });
   });
 });

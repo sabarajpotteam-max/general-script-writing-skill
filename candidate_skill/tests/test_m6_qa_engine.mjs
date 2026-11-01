@@ -94,8 +94,8 @@ function makeBasicBrief(overrides = {}) {
 // ═══════════════════════════════════════════════════════════════
 
 describe('M6: QA_HOLD_TYPES constants', () => {
-  it('has exactly 21 hold types', () => {
-    assert.equal(Object.keys(QA_HOLD_TYPES).length, 21);
+  it('has exactly 22 hold types', () => {
+    assert.equal(Object.keys(QA_HOLD_TYPES).length, 22);
   });
 
   it('includes 12 original hold types', () => {
@@ -517,16 +517,19 @@ describe('M6: Stage F — Hold Evaluation', () => {
     assert.ok(result.holds.some(h => h.type === QA_HOLD_TYPES.FINANCIAL_CLAIM));
   });
 
-  it('PASS when no holds', () => {
+  it('REVIEW (ADVISORY) when empty inputHolds and clean text', () => {
     const result = stageF_holdEvaluation([], [], 'Clean text here.', CONTENT_TYPES.CREATIVE);
-    assert.equal(result.status, QA_RESULT.PASS);
+    assert.equal(result.status, QA_RESULT.REVIEW);
+    assert.equal(result.blocking_count, 0);
+    assert.ok(result.advisory_count >= 1);
+    assert.ok(result.holds.some(h => h.type === 'HOLD_UPSTREAM_UNVERIFIED'));
   });
 
   it('ADVISORY holds produce REVIEW not HOLD', () => {
     const findings = [{ severity: 'HOLD', hold_type: QA_HOLD_TYPES.FORMAT_MISMATCH, detail: 'Test', type: 'format' }];
-    const result = stageF_holdEvaluation(findings, [], '', CONTENT_TYPES.FACTUAL);
+    const result = stageF_holdEvaluation(findings, [], '', CONTENT_TYPES.CREATIVE);
     assert.equal(result.status, QA_RESULT.REVIEW);
-    assert.equal(result.advisory_count, 1);
+    assert.ok(result.advisory_count >= 1, 'Should have at least 1 advisory');
     assert.equal(result.blocking_count, 0);
   });
 });
